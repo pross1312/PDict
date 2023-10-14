@@ -28,7 +28,7 @@ html, body {
     margin: 0;
     /* overflow-y: hidden; */
     background-color: #222;
-    font-size: large;
+    font-size: 25px;
     display: flex;
     flex-direction: column;
 }
@@ -61,11 +61,15 @@ html, body {
     border-radius: 12px;
     text-align: center;
 }
-#definition-region .keyword {
+#keyword-region {
     width: 100%;
-    position: relative;
+    display: flex;
+}
+#keyword-region .keyword-input {
+    width: 100%;
     margin: auto;
-    display: inline-block;
+    position: relative;
+    display: inline;
     font-size: 1.5rem;
     text-align: center;
 }
@@ -76,7 +80,7 @@ html, body {
     flex-shrink: 0;
 }
 .input-list-region {
-    width: 86%;
+    width: 100%;
 }
 .input-list {
     width: 100%;
@@ -102,6 +106,7 @@ button {
     border: 1px solid black;
     margin: 2px;
     margin-left: 10px;
+    padding: 5px;
 }
 button:hover {
     background-color: #444;
@@ -110,8 +115,14 @@ button:hover {
 input {
     border-radius: 5px;
 }
-#add-button {
+#update-button {
     height: 50px;
     width: 80%;
     margin: 0px auto 0px auto;
+}
+
+@media screen and (min-width: 1550) {
+    html, body {
+        font-size: 30px;
+    }
 }

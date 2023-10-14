@@ -1,40 +1,44 @@
 const http = new XMLHttpRequest();
-const server_update_addr = window.location.protocol + "//" + window.location.host + "/update";
+const server_update_addr = "http://localhost:9999/update";
+const server_query_addr = "http://localhost:9999/query";
 
-let def_list = document.getElementById("definition-list")
-let usage_list = document.getElementById("usage-list")
+let def_list = document.getElementById("definition-list");
+let usage_list = document.getElementById("usage-list");
 let keyword_input = document.getElementById("keyword-input");
 let pronounciation_input = document.getElementById("pronounciation-input");
-let add_button = document.getElementById("add-button");
+let update_button = document.getElementById("update-button");
+let check_button = document.getElementById("check-button");
+
+keyword_input.addEventListener('keydown', (e) => {
+    if (e.key === "Enter" && this.value !== "") {
+        query_entry();
+        pronounciation_input.focus();
+    }
+});
+pronounciation_input.addEventListener('keydown', (e) => {
+    if (e.key === "Enter" && this.value !== "") {
+        def_list.children[0].getElementsByTagName("input")[0].focus();
+    }
+});
 
 function on_def_input_keydown(e) {
-    switch(e.key) {
-    case 'Enter': 
-        if (this.value !== "") {
-            add_input_line(def_list, "Definition", on_def_input_keydown);
-        }
-        break;
-    default:
+    if (e.key === "Enter" && this.value !== "") {
+        add_input_line(def_list, "Definition", on_def_input_keydown, this.parentNode.nextSibling);
     }
 }
 
 function on_usage_input_keydown(e) {
-    switch(e.key) {
-    case 'Enter': 
-        if (this.value !== "") {
-            add_input_line(usage_list, "Usage", on_usage_input_keydown);
-        }
-        break;
-    default:
+    if (e.key === "Enter" && this.value !== "") {
+        add_input_line(usage_list, "Usage", on_usage_input_keydown, this.parentNode.nextSibling);
     }
 }
 
-function add_input_line(input_list, placeholder, handle_keydown_func) {
+function add_input_line(input_list, placeholder, handle_keydown_func, next_item = null) {
     let list_item = document.createElement("li");
     list_item.classList.toggle("item");
     let item_input = document.createElement("input");
     item_input.placeholder = placeholder;
-    item_input.addEventListener("keydown", handle_keydown_func);
+    item_input.onkeydown = handle_keydown_func;
     item_input.type = "text";
     item_input.name = "fname";
     let item_button = document.createElement("button");
@@ -47,8 +51,10 @@ function add_input_line(input_list, placeholder, handle_keydown_func) {
     };
     list_item.appendChild(item_input);
     list_item.appendChild(item_button);
-    input_list.appendChild(list_item);
+    if (next_item === null) input_list.appendChild(list_item);
+    else input_list.insertBefore(list_item, next_item);
     item_input.focus();
+    return item_input;
 }
 
 function update_entry(entry) {
@@ -72,27 +78,31 @@ function clear_entry() {
 }
 
 function get_entry() {
-    entry = {};
-    if (keyword_input.value !== "") {
-        entry.Keyword = keyword_input.value;
-        entry.Pronounciation = pronounciation_input.value;
+    if (keyword_input.value.trim() !== "") {
+        entry = {};
+        entry.Keyword = keyword_input.value.trim();
+        entry.Pronounciation = pronounciation_input.value.trim();
         entry.Definition = [];
         for (let def of def_list.children) {
             console.assert(def.children[0].tagName === "INPUT");
+            if (def.children[0].value === "") continue;
             entry.Definition.push(def.children[0].value.split(",").map((e) => e.trim()));
         }
+        if (entry.Definition.length == 0) return null;
         entry.Usage = [];
         for (let usage of usage_list.children) {
             console.assert(usage.children[0].tagName === "INPUT");
-            entry.Usage.push(usage.children[0].value);
+            if (usage.children[0].value === "") continue;
+            entry.Usage.push(usage.children[0].value.trim());
         }
+        return entry;
     }
-    return entry;
+    return null;
 }
 
-add_input_line(def_list, "Definition", on_def_input_keydown);
-add_input_line(usage_list, "Usage", on_usage_input_keydown);
-add_button.onclick = function() {
+add_input_line(def_list, "Definition", on_def_input_keydown, null);
+add_input_line(usage_list, "Usage", on_usage_input_keydown, null);
+update_button.onclick = function() {
     let new_entry = get_entry();
     if (new_entry == null) {
         alert("Invalid entry");
@@ -103,3 +113,40 @@ add_button.onclick = function() {
     clear_entry();
     keyword_input.focus();
 };
+
+function display(data) {
+    clear_entry();
+    def_list.innerHTML = "";
+    usage_list.innerHTML = "";
+    keyword_input.value = data.Keyword;
+    pronounciation_input.value = data.Pronounciation;
+    for (let def of data.Definition) {
+        add_input_line(def_list, "Definition", on_def_input_keydown, null).value = def.join(", ");
+    }
+    for (let usage of data.Usage) {
+        add_input_line(usage_list, "Usage", on_usage_input_keydown, null).value = usage;
+    }
+}
+
+function query_entry() {
+    if (keyword_input.value !== "") {
+        http.open("GET", server_query_addr + `?key=${keyword_input.value}`);
+        http.send();
+    }
+}
+
+http.addEventListener("load", function() {
+    if (http.status == 404) {
+        return
+    }
+    if (http.getResponseHeader("Content-Type") === "application/json") {
+        data = JSON.parse(this.response);
+        if (data == null) {
+            console.log(`[ERROR] Can't regconize data ${this.responseText}`);
+        } else {
+            display(data);
+            console.log(data);
+        }
+    }
+})
+check_button.onclick = query_entry;
