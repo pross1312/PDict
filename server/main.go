@@ -5,6 +5,7 @@ import (
     "strings"
     "path/filepath"
     "os"
+    "os/exec"
     "fmt"
     "encoding/json"
     "net/http"
@@ -57,8 +58,7 @@ func process_query(wt http.ResponseWriter, req *http.Request) {
     fmt.Printf("[INFO] Client request for key = `%s`\n", key)
     if entry, found := Dict[key]; found {
         json_data, err := json.Marshal(entry)
-        if err != nil {
-            fmt.Printf("[ERROR] %s\n", err.Error())
+        if Check_err(err, false, "Can't parse json for `query` request") {
             wt.WriteHeader(http.StatusInternalServerError)
             wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't parse json", err.Error())))
         } else {
@@ -79,9 +79,10 @@ func serve_file(wt http.ResponseWriter, req *http.Request) {
     } else {
         file_path += req.URL.Path
     }
-    fmt.Printf("[INFO] Send file %s\n", independent_path(file_path))
-    data, err := os.ReadFile(independent_path(file_path))
-    if err != nil {
+    file_path = independent_path(file_path)
+    fmt.Printf("[INFO] Send file %s\n", file_path)
+    data, err := os.ReadFile(file_path)
+    if Check_err(err, false, fmt.Sprintf("Can't read file %s", file_path)) {
         wt.WriteHeader(http.StatusNotFound)
         wt.Write([]byte(fmt.Sprintf("Error: %s\nCan't serve file %s", err.Error(), file_path)))
     } else {
@@ -103,8 +104,7 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
     case "POST":
         var entry Entry
         err := json.NewDecoder(req.Body).Decode(&entry)
-        if err != nil {
-            fmt.Printf("[ERROR] %s\n\t[INFO] Can't read Post request body\n", err.Error())
+        if Check_err(err, false, "Can't read POST request body") {
             dump_request(req)
             wt.WriteHeader(http.StatusInternalServerError)
             wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't read body", err.Error())))
@@ -123,24 +123,50 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
 
 func save_dict(file_path string) {
     data, err := json.Marshal(Dict)
-    if err != nil {
-        fmt.Println("[ERROR] %s\n\t[INFO] Can't convert map to json object\n", err.Error(), file_path)
-        os.Exit(1)
-    }
+    Check_err(err, true, "Can't convert map to json object")
     err = os.WriteFile(file_path, data, os.FileMode(0644))
-    if err != nil {
-        fmt.Println("[ERROR] %s\n\t[INFO] Can't save dictionary to file `%s`\n", err.Error(), file_path)
-        os.Exit(1)
+    Check_err(err, true, fmt.Sprintf("Can't save dictionary to file `%s`", file_path))
+}
+
+func start_default_browser() {
+    switch runtime.GOOS {
+    case "windows":
+        exec.Command("C:\\Windows\\System32\\cmd.exe", "http://" + SERVER_ADDR)
+    case "linux":
+        exec.Command("open", "http://" + SERVER_ADDR)
+    default:
+        fmt.Println("[WARNING] Unknown platform, the program may not work correctly")
+        fmt.Printf("[INFO] Please open `http://%s` on a browser\n", SERVER_ADDR)
     }
 }
 
 func main() {
     fmt.Printf("[INFO] Root on %s\n", WEB_ROOT)
     dict_data, err := os.ReadFile(SERVER_DATA_FILE_PATH)
-    if err != nil {
-        fmt.Printf("[ERROR] %s\n\t[INFO] Can't read dictionary from file `%s`\n", err.Error(), SERVER_DATA_FILE_PATH)
-    }
+    Check_err(err, false, fmt.Sprintf("Can't read dictionary from file `%s`", SERVER_DATA_FILE_PATH))
     json.Unmarshal(dict_data, &Dict)
+
+    start_default_browser()
     fmt.Printf("[INFO] Server start on %s\n", SERVER_ADDR)
     http.ListenAndServe(SERVER_ADDR, MyServer{})
+}
+func Check_err(err error, fatal bool, info ...string) bool {
+    if err != nil {
+        var msg_builder strings.Builder
+        if fatal { msg_builder.WriteString("[ERROR] ") } else { msg_builder.WriteString("[WARNING] ") }
+        msg_builder.WriteString(err.Error())
+        msg_builder.WriteString("\n")
+        for _, v := range info {
+            msg_builder.WriteString("\t [INFO] ")
+            msg_builder.WriteString(v)
+        }
+        if fatal {
+            fmt.Println(msg_builder.String())
+            os.Exit(1)
+        } else {
+            fmt.Println(msg_builder.String())
+        }
+        return true;
+    }
+    return false;
 }
