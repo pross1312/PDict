@@ -1,0 +1,121 @@
+* {
+    box-sizing: border-box;
+}
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+  border-radius: 10px;
+}
+
+/* Track */ ::-webkit-scrollbar-track {
+  background: #d1d1d1;
+  border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    /* overflow-y: hidden; */
+    background-color: #222;
+    font-size: large;
+    display: flex;
+    flex-direction: column;
+}
+
+#input-region {
+    margin: 0px auto;
+    width: 70%;
+    padding-top: 50px;
+    padding-bottom: 50px;
+    text-align: center;
+    position: relative;
+}
+
+#main-input {
+    display: inline-block;
+    margin: auto;
+    border-radius: 12px;
+    padding-left: 10px;
+    font-size: 1.5rem;
+    height: 2.0rem;
+    cursor: text;
+    width: 100%;
+}
+
+#suggestion-region {
+    background-color: #111111;
+    border-radius: 10px;
+    visibility: hidden;
+    position: absolute;
+    top: calc(50px + 2.0rem);
+    left: 0;
+    right: 0;
+    margin: 5px auto 0px auto;
+    display: block;
+    opacity: 0.9;
+    width: 70%;
+    z-index: 2;
+}
+
+.show {
+    visibility: visible !important;
+}
+
+#suggestion-list {
+    font-size: 1.2rem;
+    margin: 0px;
+    overflow-y: scroll;
+    padding: 5px 5px;
+}
+
+#suggestion-list .suggestion-item {
+    height: 1.5rem;
+    background-color: transparent;
+    color: white;
+    border: 0;
+    text-align: left;
+    width: 100%;
+    padding: 5px 0px 5px 15px;
+}
+
+#suggestion-list .suggestion-item:hover {
+    border-radius: 3px;
+    color: rgb(249, 238, 28);
+    background-color: #3d3737;
+}
+
+#meaning-region {
+    flex-grow: 1;
+    background-color: blue;
+    display: flex;
+    flex-direction: column;
+}
+#keyword {
+    flex-basis: 1.5rem;
+    flex-grow: 1;
+    flex-shrink: 0;
+    background-color: red;
+}
+#pronounciation {
+    flex-basis: 1.5rem;
+    flex-grow: 1;
+    flex-shrink: 0;
+    background-color: violet;
+}
+#meaning {
+    flex-basis: 1.5rem;
+    flex-grow: 10;
+    flex-shrink: 1;
+    background-color: white;
+}
