@@ -5,7 +5,6 @@ import (
     "strings"
     "path/filepath"
     "os"
-    "os/exec"
     "fmt"
     "encoding/json"
     "net/http"
@@ -80,7 +79,7 @@ func serve_file(wt http.ResponseWriter, req *http.Request) {
         file_path += req.URL.Path
     }
     file_path = independent_path(file_path)
-    fmt.Printf("[INFO] Send file %s\n", file_path)
+
     data, err := os.ReadFile(file_path)
     if Check_err(err, false, fmt.Sprintf("Can't read file %s", file_path)) {
         wt.WriteHeader(http.StatusNotFound)
@@ -129,11 +128,14 @@ func save_dict(file_path string) {
 }
 
 func start_default_browser() {
+    var attr os.ProcAttr
     switch runtime.GOOS {
     case "windows":
-        exec.Command("C:\\Windows\\System32\\cmd.exe", "http://" + SERVER_ADDR)
+        _, err := os.StartProcess("C:\\Windows\\System32\\cmd.exe", []string{"C:\\Windows\\System32\\cmd.exe", "http://" + SERVER_ADDR}, &attr)
+        Check_err(err, false, "Can't start default server", fmt.Sprintf("Please open `http://%s` on a browser\n", SERVER_ADDR))
     case "linux":
-        exec.Command("open", "http://" + SERVER_ADDR)
+        _, err := os.StartProcess("/usr/bin/xdg-open", []string{"/usr/bin/xdg-open", "http://" + SERVER_ADDR}, &attr)
+        Check_err(err, false, "Can't start default server", fmt.Sprintf("Please open `http://%s` on a browser\n", SERVER_ADDR))
     default:
         fmt.Println("[WARNING] Unknown platform, the program may not work correctly")
         fmt.Printf("[INFO] Please open `http://%s` on a browser\n", SERVER_ADDR)
@@ -150,6 +152,7 @@ func main() {
     fmt.Printf("[INFO] Server start on %s\n", SERVER_ADDR)
     http.ListenAndServe(SERVER_ADDR, MyServer{})
 }
+
 func Check_err(err error, fatal bool, info ...string) bool {
     if err != nil {
         var msg_builder strings.Builder
