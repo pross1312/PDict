@@ -57,7 +57,7 @@ input_box.addEventListener('focusin', function(ev) {
 input_box.addEventListener('focusout', function(ev) {
     window.setTimeout(function() { // to set text first before hide suggestions
         toggle_suggestion(false);
-    }, 100);
+    }, 150);
 });
 input_box.addEventListener('keydown', function(ev) {
     switch(ev.key) {
