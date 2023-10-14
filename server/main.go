@@ -58,7 +58,6 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             wt.Write([]byte(fmt.Sprintf("No entry for %s", key)))
         }
     case "POST":
-        dump_request(req)
         var entry Entry
         err := json.NewDecoder(req.Body).Decode(&entry)
         if err != nil {
