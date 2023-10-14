@@ -9,8 +9,8 @@ import (
 )
 
 const (
-    SERVER_DATA_FILE_PATH = "data/dictionary_data"
     SERVER_ADDR = "localhost:9999"
+    SERVER_DATA_FILE_PATH = "dictionary_data"
 )
 
 type Entry struct {
@@ -23,6 +23,7 @@ type Dictionary = map[string]Entry
 type MyServer struct {}
 
 var (
+    path_sep string
     Dict = make(Dictionary)
 )
 
@@ -85,7 +86,7 @@ func save_dict(file_path string) {
         fmt.Println("[ERROR] %s\n\t[INFO] Can't convert map to json object\n", err.Error(), file_path)
         os.Exit(1)
     }
-    err = os.WriteFile(file_path, data, os.FileMode(0777))
+    err = os.WriteFile(file_path, data, os.FileMode(0644))
     if err != nil {
         fmt.Println("[ERROR] %s\n\t[INFO] Can't save dictionary to file `%s`\n", err.Error(), file_path)
         os.Exit(1)
@@ -95,8 +96,7 @@ func save_dict(file_path string) {
 func main() {
     dict_data, err := os.ReadFile(SERVER_DATA_FILE_PATH)
     if err != nil {
-        fmt.Println("[ERROR] %s\n\t[INFO] Can't read dictionary from file `%s`\n", err.Error(), SERVER_DATA_FILE_PATH)
-        os.Exit(1)
+        fmt.Printf("[ERROR] %s\n\t[INFO] Can't read dictionary from file `%s`\n", err.Error(), SERVER_DATA_FILE_PATH)
     }
     json.Unmarshal(dict_data, &Dict)
     http.ListenAndServe(SERVER_ADDR, MyServer{})
