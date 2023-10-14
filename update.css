@@ -1,0 +1,117 @@
+* {
+    box-sizing: border-box;
+}
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+  border-radius: 10px;
+}
+
+/* Track */ ::-webkit-scrollbar-track {
+  background: #d1d1d1;
+  border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    /* overflow-y: hidden; */
+    background-color: #222;
+    font-size: large;
+    display: flex;
+    flex-direction: column;
+}
+#nav-region {
+    height: fit-content;
+    display: flex;
+    border: #888 solid;
+}
+#nav-list {
+    margin: 0px;
+    padding: 5px;
+    list-style-type: none;
+}
+#nav-list .nav-item {
+    margin: 0px 5px;
+    display: inline;
+}
+#nav-list .nav-item a {
+    color: white;
+    text-decoration: none;
+}
+#nav-list .nav-item a:hover {
+    color: greenyellow;
+    text-decoration: none;
+}
+#definition-region {
+    width: 80%;
+    margin: 50px auto 0px auto;
+    color: white;
+    border-radius: 12px;
+    text-align: center;
+}
+#definition-region .keyword {
+    width: 100%;
+    position: relative;
+    margin: auto;
+    display: inline-block;
+    font-size: 1.5rem;
+    text-align: center;
+}
+#definition-region .pronounciation {
+    width: 100%;
+    text-align: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.input-list-region {
+    width: 86%;
+}
+.input-list {
+    width: 100%;
+    list-style-type: square;
+    padding: 0px;
+}
+.input-list .item {
+    width: 100%;
+    margin: 0px;
+    display: flex;
+}
+.input-list .item input {
+    width: 100%;
+    font-size: 1rem;
+    padding-left: 10px;
+}
+
+button {
+    display: inline;
+    border-radius: 10px;
+    background-color: #333;
+    color: white;
+    border: 1px solid black;
+    margin: 2px;
+    margin-left: 10px;
+}
+button:hover {
+    background-color: #444;
+    color: white;
+}
+input {
+    border-radius: 5px;
+}
+#add-button {
+    height: 50px;
+    width: 80%;
+    margin: 0px auto 0px auto;
+}
