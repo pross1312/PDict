@@ -2,7 +2,7 @@ let input_box = document.getElementById("main-input");
 let sl = document.getElementById("suggestion-list");
 let on_display_def = false;
 const http = new XMLHttpRequest();
-const query_server_addr = "http://localhost:9999/query";
+const query_server_addr = window.location.protocol + "//" + window.location.host + "/query";
 
 http.addEventListener("load", function() {
     if (this.status == 404) {

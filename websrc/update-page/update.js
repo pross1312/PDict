@@ -1,5 +1,5 @@
 const http = new XMLHttpRequest();
-const query_server_addr = "http://localhost:9999/update";
+const server_update_addr = window.location.protocol + "//" + window.location.host + "/update";
 
 let def_list = document.getElementById("definition-list")
 let usage_list = document.getElementById("usage-list")
@@ -56,7 +56,7 @@ function update_entry(entry) {
     if (data == null) {
         console.log("Invalid json body");
     } else {
-        http.open("POST", query_server_addr);
+        http.open("POST", server_update_addr);
         http.setRequestHeader("Content-Type", "application/json");
         http.send(data);
     }
