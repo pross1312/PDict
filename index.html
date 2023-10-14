@@ -8,6 +8,12 @@
     <script src="./index.js" defer></script>
 </head>
 <body>
+    <div id="nav-region">
+        <ul id="nav-list">
+            <li class="nav-item"><a href="./index.html">Search</a></li>
+            <li class="nav-item"><a href="./update.html">Update</a></li>
+        </ul>
+    </div>
     <div id="input-region">
         <input id="main-input" type="text" lang="jp" autofocus>
     </div>
@@ -17,10 +23,13 @@
             <dt><button class="suggestion-item">Hello bro</dt>
         </dl>
     </div>
-    <div id="meaning-region">
+    <div id="definition-region">
         <div id="keyword"></div>
         <div id="pronounciation"></div>
-        <div id="meaning"></div>
+        <div id="definition">
+            <ul id="definition-list">
+            </ul>
+        </div>
     </div>
 </body>
 </html>

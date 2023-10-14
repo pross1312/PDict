@@ -2,11 +2,13 @@ let input_box = document.getElementById("main-input");
 let sl = document.getElementById("suggestion-list");
 let utf8_decoder = new TextDecoder();
 let utf8_encoder = new TextEncoder();
+let on_display_def = false;
 const http = new XMLHttpRequest();
 const query_server_addr = "http://localhost:9999/query";
 
 http.addEventListener("load", function() {
     if (this.status == 404) {
+        document.getElementById("keyword").innerText = "No definition found"
         console.log(this.response);
         return;
     }
@@ -19,10 +21,22 @@ http.addEventListener("load", function() {
     }
 })
 
+function clear_def_region() {
+    document.getElementById("keyword").innerText = "";
+    document.getElementById("pronounciation").innerText = "";
+    document.getElementById("definition-list").innerHTML = "";
+}
+
 function display(data) {
-    document.getElementById("keyword").innerHTML = data.keyword;
-    document.getElementById("pronounciation").innerHTML = data.pronounciation;
-    document.getElementById("meaning").innerHTML = data.meaning.join(" ");
+    document.getElementById("keyword").innerText = data.Keyword;
+    document.getElementById("pronounciation").innerText = data.Pronounciation;
+    let defs_list = document.getElementById("definition-list");
+    defs_list.innerHTML = "";
+    for (def of data.Definition) {
+        let list_item = document.createElement("li");
+        list_item.innerText = def.join(", ");
+        defs_list.appendChild(list_item);
+    }
 }
 
 function query_text(text) {
@@ -30,65 +44,71 @@ function query_text(text) {
     http.open("GET", query_server_addr + `?key=${text}`)
     http.send()
 }
+
+function toggle_suggestion(show) {
+    let sg = document.getElementById('suggestion-region');
+    if (show) sg.classList.add('show');
+    else sg.classList.remove('show');
+}
+
+input_box.addEventListener('click', function(ev) {
+    toggle_suggestion(true);
+});
+input_box.addEventListener('focusin', function(ev) {
+    toggle_suggestion(true);
+});
+input_box.addEventListener('focusout', function(ev) {
+    window.setTimeout(function() { // to set text first before hide suggestions
+        toggle_suggestion(false);
+    }, 100);
+});
 input_box.addEventListener('keydown', function(ev) {
     switch(ev.key) {
     case 'Enter': 
-        if (input_box.value !== "") query_text(input_box.value)
-    }
-})
-input_box.onblur = function() { window.setTimeout(function() { // to set text first before hide suggestions
-        let sg = document.getElementById('suggestion-region')
-        sg.classList.remove('show')
-    }, 200)
-}
-
-function update_suggestion(suggestions) {
-    let sug = document.getElementsByClassName("suggestion-item") || []
-    for (let suggestion of sug) {
-        suggestion.onclick = function () {
-            input_box.value = suggestion.innerHTML
+        if (input_box.value !== "") {
+            clear_def_region();
+            query_text(input_box.value);
+            toggle_suggestion(false);
         }
+        break;
+    default:
+        toggle_suggestion(true);
     }
-}
+});
 
 function create_suggestion(text) {
-    let dt = document.createElement('dt')
-    let button = document.createElement('button')
+    let dt = document.createElement('dt');
+    let button = document.createElement('button');
     button.onclick = function() {
-        input_box.value = text
-        on_selecting_suggestion = false
+        input_box.value = text;
+        clear_def_region();
+        query_text(input_box.value);
     }
-    button.innerHTML = text
-    button.classList.toggle('suggestion-item')
-    dt.appendChild(button)
-    return dt
+    button.innerHTML = text;
+    button.classList.toggle('suggestion-item');
+    dt.appendChild(button);
+    return dt;
 }
 
-sl.innerText = ''
-sl.appendChild(create_suggestion('heljqweiojqw'))
-sl.appendChild(create_suggestion('heljqweiojqw'))
-sl.appendChild(create_suggestion('heljqweiojqw'))
-sl.appendChild(create_suggestion('heljqweiojqw'))
-sl.appendChild(create_suggestion('jijeqwo'))
+sl.innerText = '';
+sl.appendChild(create_suggestion('heljqweiojqw'));
+sl.appendChild(create_suggestion('heljqweiojqw'));
+sl.appendChild(create_suggestion('私'));
+sl.appendChild(create_suggestion('jijeqwo'));
+
+sl.appendChild(create_suggestion('jijeqwo'));
 
 if (sl.children.length <= 8) {
-    sl.style.overflowY = 'hidden'
-    sl.style.height = `${sl.children.length}em`
+    sl.style.overflowY = 'hidden';
+    sl.style.height = `${sl.children.length}em`;
 }
 
 window.setInterval(function() {
-    if (document.activeElement === input_box && input_box.value.length > 0) {
-        let sg = document.getElementById('suggestion-region')
-        sg.classList.add('show')
-    } else if (input_box.value.length == 0) {
-        let sg = document.getElementById('suggestion-region')
-        sg.classList.remove('show')
-    }
     if (sl.children.length <= 8) {
-        sl.style.overflowY = 'hidden'
-        sl.style.height = 'fit-content'
+        sl.style.overflowY = 'hidden';
+        sl.style.height = 'fit-content';
     } else {
-        sl.style.overflowY = 'scroll'
-        sl.style.height = '12em'
+        sl.style.overflowY = 'scroll';
+        sl.style.height = '12em';
     }
-}, 100)
+}, 50);
