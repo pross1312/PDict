@@ -46,7 +46,7 @@ func dump_request(req *http.Request) {
 }
 
 func independent_path(file_path string) string { // platform independent
-    if runtime.GOOS == "Windows" {
+    if runtime.GOOS == "windows" {
         return strings.ReplaceAll(file_path, "/", "\\")
     }
     return file_path
