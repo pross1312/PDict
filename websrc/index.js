@@ -2,11 +2,20 @@ let input_box = document.getElementById("main-input");
 let sl = document.getElementById("suggestion-list");
 let on_display_def = false;
 const http = new XMLHttpRequest();
-const query_server_addr = window.location.protocol + "//" + window.location.host + "/query";
+const server_query_addr = "http://localhost:9999/query";
+let suggestion_region = document.getElementById('suggestion-region');
+let keyword_box = document.getElementById("keyword");
+let pronoun_box = document.getElementById("pronounciation");
+let def_list = document.getElementById("definition-list");
+let usage_list = document.getElementById("usage-list");
+let def_region = document.getElementById("definition-region");
+let usage_region = document.getElementById("usage-region");
+let def_header = document.getElementById("definition-header");
+let usage_header = document.getElementById("usage-header");
 
 http.addEventListener("load", function() {
     if (this.status == 404) {
-        document.getElementById("keyword").innerText = "No definition found"
+        keyword_box.innerText = "No definition found"
         console.log(this.response);
         return;
     }
@@ -20,32 +29,41 @@ http.addEventListener("load", function() {
 })
 
 function clear_def_region() {
-    document.getElementById("keyword").innerText = "";
-    document.getElementById("pronounciation").innerText = "";
-    document.getElementById("definition-list").innerHTML = "";
+    keyword_box.innerText = "";
+    pronoun_box.innerText = "";
+    def_header.innerText = "";
+    def_list.innerHTML = "";
+    usage_header.innerText = "";
+    usage_list.innerHTML = "";
 }
 
 function display(data) {
-    document.getElementById("keyword").innerText = data.Keyword;
-    document.getElementById("pronounciation").innerText = data.Pronounciation;
-    let defs_list = document.getElementById("definition-list");
-    defs_list.innerHTML = "";
-    for (def of data.Definition) {
+    def_header.innerText = "Definition";
+    usage_header.innerText = "Usage";
+    keyword_box.innerText = data.Keyword;
+    pronoun_box.innerText = data.Pronounciation;
+    def_list.innerHTML = "";
+    for (let def of data.Definition) {
         let list_item = document.createElement("li");
         list_item.innerText = def.join(", ");
-        defs_list.appendChild(list_item);
+        def_list.appendChild(list_item);
+    }
+    usage_list.innerHTML = "";
+    for (let usage of data.Usage) {
+        let list_item = document.createElement("li");
+        list_item.innerText = usage;
+        usage_list.appendChild(list_item);
     }
 }
 
 function query_text(text) {
-    http.open("GET", query_server_addr + `?key=${text}`);
+    http.open("GET", server_query_addr + `?key=${text}`);
     http.send();
 }
 
 function toggle_suggestion(show) {
-    let sg = document.getElementById('suggestion-region');
-    if (show) sg.classList.add('show');
-    else sg.classList.remove('show');
+    if (show) suggestion_region.classList.add('show');
+    else suggestion_region.classList.remove('show');
 }
 
 input_box.addEventListener('click', function(ev) {
@@ -57,7 +75,7 @@ input_box.addEventListener('focusin', function(ev) {
 input_box.addEventListener('focusout', function(ev) {
     window.setTimeout(function() { // to set text first before hide suggestions
         toggle_suggestion(false);
-    }, 150);
+    }, 200);
 });
 input_box.addEventListener('keydown', function(ev) {
     switch(ev.key) {

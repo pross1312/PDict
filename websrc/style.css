@@ -28,7 +28,7 @@ html, body {
     margin: 0;
     /* overflow-y: hidden; */
     background-color: #222;
-    font-size: large;
+    font-size: 25px;
     display: flex;
     flex-direction: column;
 }
@@ -58,7 +58,7 @@ html, body {
     margin: 0px auto;
     width: 70%;
     padding-top: 50px;
-    padding-bottom: 50px;
+    padding-bottom: 20px;
     text-align: center;
     position: relative;
     color: white;
@@ -117,7 +117,7 @@ html, body {
     background-color: #3d3737;
 }
 
-#definition-region {
+#data-region {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -125,8 +125,6 @@ html, body {
     border-radius: 12px;
 }
 #keyword {
-    vertical-align: middle;
-    line-height: 3rem;
     font-size: 2rem;
     text-align: center;
     flex-basis: 1rem;
@@ -137,15 +135,25 @@ html, body {
 #pronounciation {
     text-align: center;
     font-size: 1rem;
-    height: fit-content;
     flex-grow: 0;
     flex-shrink: 0;
 }
-#definition {
+.list-item-region {
     flex-basis: 1.5rem;
     flex-grow: 10;
     flex-shrink: 1;
 }
-#definition-list {
+.list-item-region .item {
+    margin: 0px;
     list-style-type: square;
+}
+.list-item-region .header {
+    margin: 0px;
+    color: rgb(144, 143, 143);
+}
+
+@media screen and (min-width: 1550) {
+    html, body {
+        font-size: 30px;
+    }
 }
