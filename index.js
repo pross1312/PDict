@@ -1,7 +1,5 @@
 let input_box = document.getElementById("main-input");
 let sl = document.getElementById("suggestion-list");
-let utf8_decoder = new TextDecoder();
-let utf8_encoder = new TextEncoder();
 let on_display_def = false;
 const http = new XMLHttpRequest();
 const query_server_addr = "http://localhost:9999/query";
@@ -40,9 +38,8 @@ function display(data) {
 }
 
 function query_text(text) {
-    console.log()
-    http.open("GET", query_server_addr + `?key=${text}`)
-    http.send()
+    http.open("GET", query_server_addr + `?key=${text}`);
+    http.send();
 }
 
 function toggle_suggestion(show) {
@@ -90,20 +87,7 @@ function create_suggestion(text) {
     return dt;
 }
 
-sl.innerText = '';
-sl.appendChild(create_suggestion('heljqweiojqw'));
-sl.appendChild(create_suggestion('heljqweiojqw'));
-sl.appendChild(create_suggestion('私'));
-sl.appendChild(create_suggestion('jijeqwo'));
-
-sl.appendChild(create_suggestion('jijeqwo'));
-
-if (sl.children.length <= 8) {
-    sl.style.overflowY = 'hidden';
-    sl.style.height = `${sl.children.length}em`;
-}
-
-window.setInterval(function() {
+window.setInterval(function() { // dynamic update suggestion list height
     if (sl.children.length <= 8) {
         sl.style.overflowY = 'hidden';
         sl.style.height = 'fit-content';
@@ -111,4 +95,7 @@ window.setInterval(function() {
         sl.style.overflowY = 'scroll';
         sl.style.height = '12em';
     }
-}, 50);
+}, 200);
+
+sl.innerText = '';
+sl.appendChild(create_suggestion('私'));
