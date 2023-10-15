@@ -43,7 +43,7 @@ function suggest_text(text) {
 }
 
 function toggle_suggestion(show) {
-    if (show) suggestion_region.classList.add('show');
+    if (show && suggestion_list.children.length > 0) suggestion_region.classList.add('show');
     else suggestion_region.classList.remove('show');
 }
 
@@ -86,7 +86,7 @@ function display_entry(data) {
     def_header.innerText = "Definition";
     usage_header.innerText = "Usage";
     keyword_box.innerText = data.Keyword;
-    pronoun_box.innerText = data.Pronounciation;
+    pronoun_box.innerText = data.Pronounciation === "" ? "----------" : data.Pronounciation;
     def_list.innerHTML = "";
     for (let def of data.Definition) {
         let list_item = document.createElement("li");
@@ -101,6 +101,14 @@ function display_entry(data) {
     }
 }
 
+function suggestion_list_has_focus() {
+    for (let child of suggestion_list.children) {
+        console.assert(child.children[0].tagName === "BUTTON");
+        if (document.activeElement == child.children[0]) return true;
+    }
+    return false;
+}
+
 input_box.addEventListener('click', function(ev) {
     if (input_box.value !== "") toggle_suggestion(true);
 });
@@ -109,8 +117,8 @@ input_box.addEventListener('focusin', function(ev) {
 });
 input_box.addEventListener('focusout', function(ev) {
     window.setTimeout(function() { // to set text first before hide suggestions
-        toggle_suggestion(false);
-    }, 200);
+        if (!suggestion_list_has_focus()) toggle_suggestion(false);
+    }, 300);
 });
 input_box.addEventListener('keydown', function(ev) {
     switch(ev.key) {
@@ -124,9 +132,9 @@ input_box.addEventListener('keydown', function(ev) {
 });
 
 window.setInterval(function() { // dynamic update suggestion list height
-    if (suggestion_list.children.length == 0) {
-    }
-    else if (suggestion_list.children.length <= 8) {
+    if (document.activeElement != input_box && !suggestion_list_has_focus()) {
+        toggle_suggestion(false);
+    } else if (suggestion_list.children.length <= 8) {
         suggestion_list.style.overflowY = 'hidden';
         suggestion_list.style.height = 'fit-content';
     } else {

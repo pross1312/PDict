@@ -138,8 +138,7 @@ function query_entry() {
 http.addEventListener("load", function() {
     if (http.status == 404) {
         return
-    }
-    if (http.getResponseHeader("Content-Type") === "application/json") {
+    } else if (http.getResponseHeader("Content-Type") === "application/json") {
         data = JSON.parse(this.response);
         if (data == null) {
             console.log(`[ERROR] Can't regconize data ${this.responseText}`);
@@ -147,6 +146,8 @@ http.addEventListener("load", function() {
             display(data);
             console.log(data);
         }
+    } else {
+        console.log(http.responseText);
     }
 })
 check_button.onclick = query_entry;
