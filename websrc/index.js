@@ -3,6 +3,7 @@ let suggestion_list = document.getElementById("suggestion-list");
 let on_display_def = false;
 const http = new XMLHttpRequest();
 const server_query_addr = "http://localhost:9999/query";
+const server_suggestion_addr = "http://localhost:9999/suggest";
 let suggestion_region = document.getElementById('suggestion-region');
 let keyword_box = document.getElementById("keyword");
 let pronoun_box = document.getElementById("pronounciation");
@@ -12,6 +13,7 @@ let def_region = document.getElementById("definition-region");
 let usage_region = document.getElementById("usage-region");
 let def_header = document.getElementById("definition-header");
 let usage_header = document.getElementById("usage-header");
+let current_suggest_text = "";
 
 http.addEventListener("load", function() {
     if (this.status == 404) {
@@ -22,12 +24,28 @@ http.addEventListener("load", function() {
         data = JSON.parse(this.response);
         if (data == null) {
             console.log(`[ERROR] Can't regconize data ${this.responseText}`);
-        } else {
-            display(data);
-            console.log(data);
+        } else if (data.Keyword != null) {
+            display_entry(data);
+        } else if (data.Suggestion != null) {
+            display_suggestion(data.Suggestion);
         }
     }
 })
+
+function query_text(text) {
+    http.open("GET", server_query_addr + `?key=${text}`);
+    http.send();
+}
+
+function suggest_text(text) {
+    http.open("GET", server_suggestion_addr + `?key=${text}`);
+    http.send();
+}
+
+function toggle_suggestion(show) {
+    if (show) suggestion_region.classList.add('show');
+    else suggestion_region.classList.remove('show');
+}
 
 function search_key(text) {
     window.open("http://" + window.location.host + `/?key=${text}`,"_self");
@@ -42,8 +60,29 @@ function clear_def_region() {
     usage_list.innerHTML = "";
 }
 
-function display(data) {
-    input_box.value = data.Keyword;
+function add_suggestion(text) {
+    let dt = document.createElement('dt');
+    let button = document.createElement('button');
+    button.onclick = function() {
+        search_key(text);
+    }
+    button.innerHTML = text;
+    button.classList.toggle('suggestion-item');
+    dt.appendChild(button);
+    suggestion_list.appendChild(dt);
+}
+
+function display_suggestion(suggestions) {
+    suggestion_list.innerHTML = "";
+    for (let word of suggestions) {
+        add_suggestion(word)
+    }
+    if (suggestions.length == 0) toggle_suggestion(false);
+    else toggle_suggestion(true);
+}
+
+function display_entry(data) {
+    // input_box.value = data.Keyword;
     def_header.innerText = "Definition";
     usage_header.innerText = "Usage";
     keyword_box.innerText = data.Keyword;
@@ -62,21 +101,11 @@ function display(data) {
     }
 }
 
-function query_text(text) {
-    http.open("GET", server_query_addr + `?key=${text}`);
-    http.send();
-}
-
-function toggle_suggestion(show) {
-    if (show) suggestion_region.classList.add('show');
-    else suggestion_region.classList.remove('show');
-}
-
 input_box.addEventListener('click', function(ev) {
-    toggle_suggestion(true);
+    if (input_box.value !== "") toggle_suggestion(true);
 });
 input_box.addEventListener('focusin', function(ev) {
-    toggle_suggestion(true);
+    if (input_box.value !== "") toggle_suggestion(true);
 });
 input_box.addEventListener('focusout', function(ev) {
     window.setTimeout(function() { // to set text first before hide suggestions
@@ -91,24 +120,13 @@ input_box.addEventListener('keydown', function(ev) {
         }
         break;
     default:
-        toggle_suggestion(true);
     }
 });
 
-function create_suggestion(text) {
-    let dt = document.createElement('dt');
-    let button = document.createElement('button');
-    button.onclick = function() {
-        search_key(text);
-    }
-    button.innerHTML = text;
-    button.classList.toggle('suggestion-item');
-    dt.appendChild(button);
-    return dt;
-}
-
 window.setInterval(function() { // dynamic update suggestion list height
-    if (suggestion_list.children.length <= 8) {
+    if (suggestion_list.children.length == 0) {
+    }
+    else if (suggestion_list.children.length <= 8) {
         suggestion_list.style.overflowY = 'hidden';
         suggestion_list.style.height = 'fit-content';
     } else {
@@ -117,6 +135,15 @@ window.setInterval(function() { // dynamic update suggestion list height
     }
 }, 200);
 
+window.setInterval(function() { // suggestion
+    if (document.activeElement != input_box) return;
+    if (current_suggest_text !== input_box.value) {
+        if (input_box.value !== "") suggest_text(input_box.value);
+        else display_suggestion([]);
+        current_suggest_text = input_box.value;
+    }
+}, 100);
+
 // parse search param and display query result
 const query_str = window.location.search;
 const url_params = new URLSearchParams(query_str);
@@ -124,5 +151,3 @@ if (url_params.get("key") !== null) {
     query_text(url_params.get("key"));
     toggle_suggestion(false);
 }
-suggestion_list.innerText = '';
-suggestion_list.appendChild(create_suggestion('私'));
