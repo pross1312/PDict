@@ -1,5 +1,5 @@
 let input_box = document.getElementById("main-input");
-let sl = document.getElementById("suggestion-list");
+let suggestion_list = document.getElementById("suggestion-list");
 let on_display_def = false;
 const http = new XMLHttpRequest();
 const server_query_addr = "http://localhost:9999/query";
@@ -18,15 +18,20 @@ http.addEventListener("load", function() {
         keyword_box.innerText = "No definition found"
         console.log(this.response);
         return;
-    }
-    data = JSON.parse(this.response);
-    if (data == null) {
-        console.log(`[ERROR] Can't regconize data ${this.responseText}`);
-    } else {
-        display(data);
-        console.log(data);
+    } else if (this.getResponseHeader("Content-Type").includes("application/json")) {
+        data = JSON.parse(this.response);
+        if (data == null) {
+            console.log(`[ERROR] Can't regconize data ${this.responseText}`);
+        } else {
+            display(data);
+            console.log(data);
+        }
     }
 })
+
+function search_key(text) {
+    window.open("http://" + window.location.host + `/?key=${text}`,"_self");
+}
 
 function clear_def_region() {
     keyword_box.innerText = "";
@@ -38,6 +43,7 @@ function clear_def_region() {
 }
 
 function display(data) {
+    input_box.value = data.Keyword;
     def_header.innerText = "Definition";
     usage_header.innerText = "Usage";
     keyword_box.innerText = data.Keyword;
@@ -81,9 +87,7 @@ input_box.addEventListener('keydown', function(ev) {
     switch(ev.key) {
     case 'Enter': 
         if (input_box.value !== "") {
-            clear_def_region();
-            query_text(input_box.value);
-            toggle_suggestion(false);
+            search_key(input_box.value);
         }
         break;
     default:
@@ -95,9 +99,7 @@ function create_suggestion(text) {
     let dt = document.createElement('dt');
     let button = document.createElement('button');
     button.onclick = function() {
-        input_box.value = text;
-        clear_def_region();
-        query_text(input_box.value);
+        search_key(text);
     }
     button.innerHTML = text;
     button.classList.toggle('suggestion-item');
@@ -106,14 +108,21 @@ function create_suggestion(text) {
 }
 
 window.setInterval(function() { // dynamic update suggestion list height
-    if (sl.children.length <= 8) {
-        sl.style.overflowY = 'hidden';
-        sl.style.height = 'fit-content';
+    if (suggestion_list.children.length <= 8) {
+        suggestion_list.style.overflowY = 'hidden';
+        suggestion_list.style.height = 'fit-content';
     } else {
-        sl.style.overflowY = 'scroll';
-        sl.style.height = '12em';
+        suggestion_list.style.overflowY = 'scroll';
+        suggestion_list.style.height = '12em';
     }
 }, 200);
 
-sl.innerText = '';
-sl.appendChild(create_suggestion('私'));
+// parse search param and display query result
+const query_str = window.location.search;
+const url_params = new URLSearchParams(query_str);
+if (url_params.get("key") !== null) {
+    query_text(url_params.get("key"));
+    toggle_suggestion(false);
+}
+suggestion_list.innerText = '';
+suggestion_list.appendChild(create_suggestion('私'));

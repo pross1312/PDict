@@ -139,6 +139,7 @@ html, body {
     flex-shrink: 0;
 }
 .list-item-region {
+    font-size: 1.25rem;
     flex-basis: 1.5rem;
     flex-grow: 10;
     flex-shrink: 1;
