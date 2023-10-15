@@ -1,6 +1,8 @@
 package main
 
 import (
+    "slices"
+    "sync"
     "runtime"
     "strings"
     "path/filepath"
@@ -12,6 +14,7 @@ import (
 )
 
 const (
+    INIT_ARRAY_BUFFER = 8
     SERVER_ADDR = "localhost:9999"
     SERVER_DATA_FILE_PATH = "dictionary_data"
     WEB_ROOT = "../websrc"
@@ -24,6 +27,7 @@ type Entry struct {
     Usage []string
 }
 type Dictionary = map[string]Entry
+type RelatedWords = map[string][]string
 type MyServer struct {}
 
 var (
@@ -33,6 +37,8 @@ var (
         ".css": "text/css",
         ".js": "text/javascript",
     }
+    related_word_mutex sync.Mutex // for thread save because http.ListenAndServe probably run on another goroutine
+    Related_words = make(RelatedWords)
 )
 
 func prettyPrint(i interface{}) string {
@@ -50,6 +56,39 @@ func independent_path(file_path string) string { // platform independent
         return strings.ReplaceAll(file_path, "/", "\\")
     }
     return file_path
+}
+
+func update_related_words_for_key(word string) {
+    for _, value := range word {
+        key := string(value)
+        related_word_mutex.Lock()
+        if Related_words[key] == nil { Related_words[key] = make([]string, 0, INIT_ARRAY_BUFFER) }
+        temp := Related_words[key]
+        if index := slices.Index(temp, key); index != -1 {
+            Related_words[key] = append(temp, word)
+        }
+        related_word_mutex.Unlock()
+    }
+}
+
+func process_suggest(wt http.ResponseWriter, req *http.Request) {
+    key := req.URL.Query().Get("key")
+    fmt.Printf("[INFO] Client request for suggestion of `%s`\n", key)
+    result := make([]string, 0, INIT_ARRAY_BUFFER)
+    for word, _ := range Dict {
+        if strings.Contains(word, key) {
+            result = append(result, word)
+        }
+    }
+    json_data, err := json.Marshal(struct{ Suggestion []string }{ result })
+    if Check_err(err, false, "Can't parse json for `suggest` request") {
+        wt.WriteHeader(http.StatusInternalServerError)
+        wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't parse json", err.Error())))
+    } else {
+        wt.Header().Set("Content-Type", "application/json")
+        wt.WriteHeader(http.StatusOK)
+        wt.Write(json_data)
+    }
 }
 
 func process_query(wt http.ResponseWriter, req *http.Request) {
@@ -97,6 +136,8 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
         fmt.Printf("[INFO] Client request for %s\n", req.URL.Path)
         if req.URL.Path == "/query" {
             process_query(wt, req)
+        } else if (req.URL.Path == "/suggest") {
+            process_suggest(wt, req)
         } else {
             serve_file(wt, req)
         }
