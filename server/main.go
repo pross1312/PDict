@@ -51,14 +51,11 @@ func dump_request(req *http.Request) {
     fmt.Println(string(req_str))
 }
 
-func independent_path(file_path string) string { // platform independent
-    if runtime.GOOS == "windows" {
-        return strings.ReplaceAll(file_path, "/", "\\")
-    }
-    return file_path
-}
-
 func update_related_words_for_key(word string) {
+    if word == "" {
+        fmt.Println("[WARNING] Client try to update with empty key")
+        return
+    }
     for _, value := range word {
         key := string(value)
         related_word_mutex.Lock()
@@ -110,6 +107,21 @@ func process_query(wt http.ResponseWriter, req *http.Request) {
     }
 }
 
+func process_list(wt http.ResponseWriter, req *http.Request) {
+    list := make([]string, 0, len(Dict))
+    for k, _ := range Dict { list = append(list, k) }
+    json_data, err := json.Marshal(list)
+    if Check_err(err, false, "Can't parse json for `list` request") {
+        wt.WriteHeader(http.StatusInternalServerError)
+        wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't parse json", err.Error())))
+    } else {
+        fmt.Println("Sent " + string(json_data))
+        wt.Header().Set("Content-Type", "application/json")
+        wt.WriteHeader(http.StatusOK)
+        wt.Write(json_data)
+    }
+}
+
 func serve_file(wt http.ResponseWriter, req *http.Request) {
     file_path := WEB_ROOT
     if req.URL.Path == "/" {
@@ -117,16 +129,20 @@ func serve_file(wt http.ResponseWriter, req *http.Request) {
     } else {
         file_path += req.URL.Path
     }
-    file_path = independent_path(file_path)
+    file_path = filepath.FromSlash(file_path)
 
     data, err := os.ReadFile(file_path)
-    if Check_err(err, false, fmt.Sprintf("Can't read file %s", file_path)) {
+    if Check_err(err, false, "Can't read file " + file_path) {
         wt.WriteHeader(http.StatusNotFound)
         wt.Write([]byte(fmt.Sprintf("Error: %s\nCan't serve file %s", err.Error(), file_path)))
     } else {
         wt.Header().Set("Content-Type", content_types[filepath.Ext(file_path)])
         wt.Write(data)
     }
+}
+
+func remove_all_entry(words []string) {
+    for _, word := range words { delete(Dict, word) }
 }
 
 func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
@@ -138,6 +154,8 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             process_query(wt, req)
         } else if (req.URL.Path == "/suggest") {
             process_suggest(wt, req)
+        } else if (req.URL.Path == "/list") {
+            process_list(wt, req)
         } else {
             serve_file(wt, req)
         }
@@ -148,13 +166,27 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             dump_request(req)
             wt.WriteHeader(http.StatusInternalServerError)
             wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't read body", err.Error())))
+        } else {
+            Dict[entry.Keyword] = entry;
+            fmt.Printf("[INFO] Update %s\n", prettyPrint(entry))
+            fmt.Fprint(wt, "[INFO] Successfully update")
+            save_dict(SERVER_DATA_FILE_PATH);
         }
-        Dict[entry.Keyword] = entry;
-        fmt.Printf("Update %s\n", prettyPrint(entry))
-        fmt.Fprint(wt, "SUCCESSFULLY")
-        save_dict(SERVER_DATA_FILE_PATH);
+    case "DELETE":
+        var words []string
+        err := json.NewDecoder(req.Body).Decode(&words)
+        if Check_err(err, false, "Can't read DELETE request body") {
+            dump_request(req)
+            wt.WriteHeader(http.StatusInternalServerError)
+            wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't read body", err.Error())))
+        } else {
+            remove_all_entry(words)
+            fmt.Println("[INFO] Delete ", words)
+            fmt.Fprint(wt, "[INFO] Successfully delete")
+            save_dict(SERVER_DATA_FILE_PATH);
+        }
     case "OPTIONS":
-        wt.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET, POST")
+        wt.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET, POST, DELETE")
         wt.Header().Set("Access-Control-Allow-Headers", "Content-Length, Content-Type")
     default:
         dump_request(req)
