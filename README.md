@@ -1,16 +1,15 @@
-# Some name
+# PDict
 A personal dictionary and tool for learning new words.
 
 ## Todo
-- [ ] Update an already exist entry
-- [ ] Add List and Remove
-- [ ] Realtime suggestion
+- [x] Update an already exist entry
+- [x] Add List and Remove
+- [-] Realtime suggestion (still dumb, need rework)
+- [x] Add Learn
 
 ## Quick start
 ```console
 $ cd server
 $ go build .
-$ ./server &
-$ cd ..
-$ open index.html
+$ ./server
 ```
