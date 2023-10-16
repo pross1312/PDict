@@ -1,6 +1,7 @@
 package main
 
 import (
+    "math/rand"
     "slices"
     "sync"
     "runtime"
@@ -39,6 +40,8 @@ var (
     }
     related_word_mutex sync.Mutex // for thread save because http.ListenAndServe probably run on another goroutine
     Related_words = make(RelatedWords)
+    used_words []string
+    unused_words []string
 )
 
 func prettyPrint(i interface{}) string {
@@ -141,6 +144,37 @@ func serve_file(wt http.ResponseWriter, req *http.Request) {
     }
 }
 
+func process_nextword(wt http.ResponseWriter, req *http.Request) {
+    // TODO: Maybe some data race will happen here because i also change unused_words and used_words when add new entry
+    //       which probably run in different thread
+    // TODO: Maybe add a mutex
+    index := rand.Intn(len(unused_words))
+    key := unused_words[index]
+    unused_words[index] = unused_words[len(unused_words)-1]
+    unused_words = unused_words[:len(unused_words)-1]
+    used_words = append(used_words, key)
+    if len(unused_words) == 0 { // switch used and unused
+        temp := unused_words
+        unused_words = used_words
+        used_words = temp
+        fmt.Println("[INFO] Switch used and unused")
+    }
+    if entry, found := Dict[key]; found {
+        json_data, err := json.Marshal(entry)
+        if Check_err(err, false, "Can't parse json for `nextword` request") {
+            wt.WriteHeader(http.StatusInternalServerError)
+            wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't parse json", err.Error())))
+        } else {
+            wt.Header().Set("Content-Type", "application/json")
+            wt.WriteHeader(http.StatusOK)
+            wt.Write(json_data)
+        }
+    } else {
+        wt.WriteHeader(http.StatusInternalServerError)
+        fmt.Fprint(wt, "[ERROR] Unused list probably is invalid")
+    }
+}
+
 func remove_all_entry(words []string) {
     for _, word := range words { delete(Dict, word) }
 }
@@ -156,6 +190,8 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             process_suggest(wt, req)
         } else if (req.URL.Path == "/list") {
             process_list(wt, req)
+        } else if (req.URL.Path == "/nextword") {
+            process_nextword(wt, req)
         } else {
             serve_file(wt, req)
         }
@@ -168,6 +204,7 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't read body", err.Error())))
         } else {
             Dict[entry.Keyword] = entry;
+            used_words = append(used_words, entry.Keyword)
             fmt.Printf("[INFO] Update %s\n", prettyPrint(entry))
             fmt.Fprint(wt, "[INFO] Successfully update")
             save_dict(SERVER_DATA_FILE_PATH);
@@ -220,7 +257,13 @@ func main() {
     dict_data, err := os.ReadFile(SERVER_DATA_FILE_PATH)
     Check_err(err, false, fmt.Sprintf("Can't read dictionary from file `%s`", SERVER_DATA_FILE_PATH))
     json.Unmarshal(dict_data, &Dict)
-
+    used_words = make([]string, 0, len(Dict))
+    unused_words = make([]string, len(Dict))
+    i := 0;
+    for _, v := range Dict {
+        unused_words[i] = v.Keyword
+        i++
+    }
     start_default_browser()
     fmt.Printf("[INFO] Server start on %s\n", SERVER_ADDR)
     http.ListenAndServe(SERVER_ADDR, MyServer{})
