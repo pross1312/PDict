@@ -3,6 +3,7 @@ const server_list_addr = "http://localhost:9999/list";
 const server_delete_addr = "http://localhost:9999/delete";
 let left_list = document.getElementById("list-left");
 let right_list = document.getElementById("list-right");
+let center_list = document.getElementById("list-center");
 let remove_list = [];
 
 http.addEventListener("load", function() {
@@ -28,12 +29,14 @@ function list() {
 function display(data) {
     left_list.innerHTML = "";
     right_list.innerHTML = "";
-    let half_length = parseInt(data.length/2);
-    for (let i = 0; i < half_length; i++) {
-        add_word(data[i], true);
-        add_word(data[i+half_length], false);
+    let third_length = parseInt(data.length/3);
+    for (let i = 0; i < third_length; i++) {
+        add_word(data[i], "left");
+        add_word(data[i+third_length], "center");
+        add_word(data[i+2*third_length], "right");
     }
-    if (data.length % 2 == 1) add_word(data[data.length-1], true);
+    if (data.length % 3 != 0) add_word(data[data.length-1], "left");
+    if (data.length % 3 == 2) add_word(data[data.length-1], "center");
 }
 
 function remove_all() {
@@ -63,7 +66,7 @@ function select_word() {
     }
 }
 
-function add_word(text, is_left) {
+function add_word(text, position) {
     let item = document.createElement("li");
     let remove_button = document.createElement("button");
     remove_button.classList.toggle("select-button");
@@ -71,8 +74,9 @@ function add_word(text, is_left) {
     remove_button.innerText = text;
     remove_button.onclick = select_word;
     item.appendChild(remove_button);
-    if (is_left) left_list.appendChild(item);
-    else right_list.appendChild(item);
+    if (position === "left") left_list.appendChild(item);
+    else if (position === "right") right_list.appendChild(item);
+    else center_list.appendChild(item);
 }
 
 list();
