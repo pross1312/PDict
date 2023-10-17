@@ -11,5 +11,5 @@ A personal dictionary and tool for learning new words.
 ```console
 $ cd server
 $ go build .
-$ ./server
+$ ./server `data_file_path (optional - default = "dictionary_data")`
 ```
