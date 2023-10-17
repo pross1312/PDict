@@ -1,5 +1,5 @@
 const http                   = new XMLHttpRequest();
-const server_nextword_addr = "http://localhost:9999/nextword";
+const server_nextword_addr   = "http://localhost:9999/nextword";
 let keyword_box              = document.getElementById("keyword");
 let pronoun_box              = document.getElementById("pronounciation");
 let def_list                 = document.getElementById("definition-list");
@@ -9,6 +9,7 @@ let usage_region             = document.getElementById("usage-region");
 let def_header               = document.getElementById("definition-header");
 let usage_header             = document.getElementById("usage-header");
 let show_answer_button       = document.getElementById("show-answer");
+let is_show                  = false;
 
 http.addEventListener("load", function() {
     if (this.status == 404) {
@@ -22,10 +23,17 @@ http.addEventListener("load", function() {
         } else if (data.Keyword != null) {
             display_entry(data);
         }
+    } else if (this.responseText === "No words to learn") {
+        keyword_box.innerText = this.responseText;
+    } else {
+        alert(`Server send '${this.responseText}'`);
     }
 })
 
 function next_word() {
+    pronoun_box.classList.remove("show");
+    def_region.classList.remove("show");
+    usage_region.classList.remove("show");
     http.open("GET", server_nextword_addr);
     http.send();
 }
@@ -51,9 +59,9 @@ function display_entry(data) {
 }
 
 show_answer_button.onclick = function(e) {
-    pronoun_box.classList.toggle("show");
-    def_region.classList.toggle("show");
-    usage_region.classList.toggle("show");
+    pronoun_box.classList.add("show");
+    def_region.classList.add("show");
+    usage_region.classList.add("show");
 }
 
 window.onkeydown = function(e) {
