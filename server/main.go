@@ -14,13 +14,6 @@ import (
     "net/http/httputil"
 )
 
-const (
-    INIT_ARRAY_BUFFER = 8
-    SERVER_ADDR = "localhost:9999"
-    SERVER_DATA_FILE_PATH = "dictionary_data"
-    WEB_ROOT = "../websrc"
-)
-
 type Entry struct {
     Keyword string
     Definition [][]string
@@ -31,7 +24,14 @@ type Dictionary = map[string]Entry
 type RelatedWords = map[string][]string
 type MyServer struct {}
 
+const (
+    INIT_ARRAY_BUFFER = 8
+    SERVER_ADDR = "localhost:9999"
+    WEB_ROOT = "../websrc"
+)
+
 var (
+    SERVER_DATA_FILE_PATH = "dictionary_data"
     Dict = make(Dictionary)
     content_types = map[string]string{
         ".html": "text/html",
@@ -145,6 +145,11 @@ func serve_file(wt http.ResponseWriter, req *http.Request) {
 }
 
 func process_nextword(wt http.ResponseWriter, req *http.Request) {
+    if (len(unused_words) == 0) { // avoid panic
+        wt.WriteHeader(http.StatusOK)
+        fmt.Fprint(wt, "No words to learn")
+        return;
+    }
     // TODO: Maybe some data race will happen here because i also change unused_words and used_words when add new entry
     //       which probably run in different thread
     // TODO: Maybe add a mutex
@@ -254,11 +259,15 @@ func start_default_browser() {
 
 func main() {
     fmt.Printf("[INFO] Root on %s\n", WEB_ROOT)
+    if (len(os.Args) == 2) {
+        SERVER_DATA_FILE_PATH = os.Args[1];
+    }
+    fmt.Printf("[INFO] Dictionary file `%s`\n", SERVER_DATA_FILE_PATH)
     dict_data, err := os.ReadFile(SERVER_DATA_FILE_PATH)
     Check_err(err, false, fmt.Sprintf("Can't read dictionary from file `%s`", SERVER_DATA_FILE_PATH))
     json.Unmarshal(dict_data, &Dict)
-    used_words = make([]string, 0, len(Dict))
-    unused_words = make([]string, len(Dict))
+    used_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
+    unused_words = make([]string, len(Dict) + INIT_ARRAY_BUFFER)
     i := 0;
     for _, v := range Dict {
         unused_words[i] = v.Keyword
