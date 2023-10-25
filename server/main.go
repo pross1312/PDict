@@ -145,10 +145,11 @@ func serve_file(wt http.ResponseWriter, req *http.Request) {
 }
 
 func process_nextword(wt http.ResponseWriter, req *http.Request) {
-    if (len(unused_words) == 0) { // avoid panic
-        wt.WriteHeader(http.StatusOK)
-        fmt.Fprint(wt, "No words to learn")
-        return;
+    if len(unused_words) == 0 { // switch used and unused
+        temp := unused_words
+        unused_words = used_words
+        used_words = temp
+        fmt.Println("[INFO] Switch used and unused")
     }
     // TODO: Maybe some data race will happen here because i also change unused_words and used_words when add new entry
     //       which probably run in different thread
@@ -158,12 +159,6 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
     unused_words[index] = unused_words[len(unused_words)-1]
     unused_words = unused_words[:len(unused_words)-1]
     used_words = append(used_words, key)
-    if len(unused_words) == 0 { // switch used and unused
-        temp := unused_words
-        unused_words = used_words
-        used_words = temp
-        fmt.Println("[INFO] Switch used and unused")
-    }
     if entry, found := Dict[key]; found {
         json_data, err := json.Marshal(entry)
         if Check_err(err, false, "Can't parse json for `nextword` request") {
