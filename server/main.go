@@ -146,6 +146,11 @@ func serve_file(wt http.ResponseWriter, req *http.Request) {
 
 func process_nextword(wt http.ResponseWriter, req *http.Request) {
     if len(unused_words) == 0 { // switch used and unused
+        if len(used_words) == 0 {
+            wt.WriteHeader(http.StatusOK)
+            fmt.Fprint(wt, "No words to learn")
+            return
+        }
         temp := unused_words
         unused_words = used_words
         used_words = temp
