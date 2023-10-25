@@ -123,9 +123,11 @@ function display(data) {
     for (let def of data.Definition) {
         add_input_line(def_list, "Definition", on_def_input_keydown, null).value = def.join(", ");
     }
+    if (def_list.children.length == 0) add_input_line(def_list, "Definition", on_def_input_keydown, null);
     for (let usage of data.Usage) {
         add_input_line(usage_list, "Usage", on_usage_input_keydown, null).value = usage;
     }
+    if (usage_list.children.length == 0) add_input_line(usage_list, "Usage", on_usage_input_keydown, null);
 }
 
 function query_entry() {
