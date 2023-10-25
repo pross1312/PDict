@@ -175,8 +175,9 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
             wt.Write(json_data)
         }
     } else {
+        fmt.Println("[ERROR] Can't find", key, len(unused_words), len(Dict))
         wt.WriteHeader(http.StatusInternalServerError)
-        fmt.Fprint(wt, "[ERROR] Unused list probably is invalid")
+        fmt.Fprintf(wt, "[ERROR] Unused list probably is invalid '%s'", key)
     }
 }
 
@@ -267,12 +268,13 @@ func main() {
     Check_err(err, false, fmt.Sprintf("Can't read dictionary from file `%s`", SERVER_DATA_FILE_PATH))
     json.Unmarshal(dict_data, &Dict)
     used_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
-    unused_words = make([]string, len(Dict) + INIT_ARRAY_BUFFER)
+    unused_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
     i := 0;
     for _, v := range Dict {
         unused_words[i] = v.Keyword
         i++
     }
+    fmt.Println(unused_words);
     start_default_browser()
     fmt.Printf("[INFO] Server start on %s\n", SERVER_ADDR)
     http.ListenAndServe(SERVER_ADDR, MyServer{})

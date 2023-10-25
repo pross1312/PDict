@@ -105,7 +105,7 @@ add_input_line(usage_list, "Usage", on_usage_input_keydown, null);
 update_button.onclick = function() {
     let new_entry = get_entry();
     if (new_entry == null) {
-        alert("Invalid entry");
+        alert("Invalid entry\nNo keyword or definition prvided");
         return;
     }
     console.log(new_entry);
