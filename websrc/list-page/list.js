@@ -28,6 +28,7 @@ function list() {
 
 function display(data) {
     left_list.innerHTML = "";
+    center_list.innertHTML = "";
     right_list.innerHTML = "";
     let third_length = parseInt(data.length/3);
     for (let i = 0; i < third_length; i++) {
