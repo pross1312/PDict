@@ -12,7 +12,6 @@
     <div id="nav-region">
         <ul id="nav-list">
             <li class="nav-item"><a href="./index.html">Search</a></li>
-            <li class="nav-item"><a href="./update-page/update.html">Update</a></li>
             <li class="nav-item"><a href="./list-page/list.html">List</a></li>
             <li class="nav-item"><a href="./learn-page/learn.html">Learn</a></li>
         </ul>
@@ -24,18 +23,21 @@
         <dl id="suggestion-list">
         </dl>
     </div>
-    <div id="data-region">
-        <div id="keyword"></div>
-        <div id="pronounciation"></div>
-        <div class="list-item-region" id="definition-region">
-            <h4 class="header" id="definition-header"></h4>
-            <ul class="item" id="definition-list">
-            </ul>
+    <div class="grow-region" id="data-region">
+        <div class="middle"><h1 id="keyword"></h1></div>
+        <div class="middle">
+            <span class="optional-input hide" id="pronounciation">
+                <input class="hide" type="text" spellcheck="false">
+                <button>➕</button>
+            </span>
         </div>
-        <div class="list-item-region" id="usage-region">
-            <h4 class="header" id="usage-header"></h4>
-            <ul class="item" id="usage-list">
-            </ul>
+        <div class="list-region grow-region" id="def-region">
+            <h3 class="header"></h3>
+            <ul class="list-items" id="def-list"></ul>
+        </div>
+        <div class="list-region grow-region" id="usage-region">
+            <h3 class="header"></h3>
+            <ul class="list-items" id="usage-list"></ul>
         </div>
     </div>
 </body>

@@ -1,24 +1,58 @@
-let input_box = document.getElementById("main-input");
-let suggestion_list = document.getElementById("suggestion-list");
-let on_display_def = false;
 const http = new XMLHttpRequest();
 const server_query_addr = "http://localhost:9999/query";
 const server_suggestion_addr = "http://localhost:9999/suggest";
+const server_update_addr = "http://localhost:9999/update";
+let input_box = document.getElementById("main-input");
+let suggestion_list = document.getElementById("suggestion-list");
+let on_display_def = false;
 let suggestion_region = document.getElementById('suggestion-region');
+let current_suggest_text = "";
+let def_list = document.getElementById("def-list");
+let def_region = document.getElementById("def-region");
+let usage_list = document.getElementById("usage-list");
+let usage_region = document.getElementById("usage-region");
 let keyword_box = document.getElementById("keyword");
 let pronoun_box = document.getElementById("pronounciation");
-let def_list = document.getElementById("definition-list");
-let usage_list = document.getElementById("usage-list");
-let def_region = document.getElementById("definition-region");
-let usage_region = document.getElementById("usage-region");
-let def_header = document.getElementById("definition-header");
-let usage_header = document.getElementById("usage-header");
-let current_suggest_text = "";
+
+function optional_input_set_text(op_input, text) {
+    let input = op_input.children[0];
+    let btn = op_input.children[1];
+    if (typeof(text) !== "string") alert("Invalid type for set text");
+    text = text == null ? "" : text.trim();
+    if (text == "") {
+        btn.classList.remove("hide");
+        input.value = "";
+        input.classList.add("hide");
+    } else {
+        btn.classList.add("hide");
+        input.value = text;
+        input.classList.remove("hide");
+    }
+}
+// init pronounciation box
+pronoun_box.children[1].onclick = function(e) {
+    this.previousElementSibling.classList.remove("hide");
+    this.classList.add("hide");
+    this.previousElementSibling.focus();
+};
+
+pronoun_box.children[0].onkeydown = function(e) {
+    if ((e.type == "keydown" && e.key == "Enter") || e.type == "focusout" || e.type == "blur") {
+        if (this.value.trim() === "") {
+            this.nextElementSibling.classList.remove("hide");
+            this.classList.add("hide");
+            return;
+        }
+    }
+    if (def_list.children.length > 0) def_list.children[0].focus();
+}
+pronoun_box.children[0].onblur = pronoun_box.children[0].onkeydown;
+
+
 
 http.addEventListener("load", function() {
     if (this.status == 404) {
-        keyword_box.innerText = "No definition found"
-        console.log(this.response);
+        display_entry({Keyword: input_box.value});
         return;
     } else if (this.getResponseHeader("Content-Type").includes("application/json")) {
         data = JSON.parse(this.response);
@@ -53,11 +87,114 @@ function search_key(text) {
 
 function clear_def_region() {
     keyword_box.innerText = "";
-    pronoun_box.innerText = "";
-    def_header.innerText = "";
-    def_list.innerHTML = "";
-    usage_header.innerText = "";
-    usage_list.innerHTML = "";
+    optional_input_set_text(pronoun_box, "");
+    pronoun_box.classList.add("hide");
+    def_list.innerText = "";
+    usage_list.innerText = "";
+}
+
+window.onkeydown = function(e) {
+    if (e.key == "Backspace") {
+        let deleting_elements = document.querySelectorAll(".list-items li.selected")
+        if (deleting_elements.length != 0) {
+            for (let element of deleting_elements) element.remove();
+            update_entry(get_entry());
+        }
+    }
+}
+function get_entry() {
+    if (keyword_box.innerText !== "") {
+        let entry = {};
+        entry.Keyword = keyword_box.innerText;
+        entry.Pronounciation = pronoun_box.children[0].value;
+        entry.Definition = [];
+        entry.Usage = [];
+        for (let def of document.querySelectorAll("#def-list li span")) {
+            entry.Definition.push(def.innerText.split(", "));
+        }
+        for (let usage of document.querySelectorAll("#usage-list li span")) {
+            entry.Usage.push(usage.innerText);
+        }
+        return entry;
+    } else alert("Invalid, something went wrong when trying to get entry");
+}
+function update_entry(entry) {
+    let data = JSON.stringify(entry);
+    if (data == null) {
+        console.log("Invalid json body");
+    } else {
+        http.open("POST", server_update_addr);
+        http.setRequestHeader("Content-Type", "application/json");
+        http.send(data);
+    }
+}
+function make_list_item(text) {
+    let item = document.createElement("li");
+    let span = document.createElement("span");
+    span.innerText = text;
+    let input = document.createElement("input");
+    input.classList.add("hide");
+    input.onblur = function(e) {
+        if (this.style.display === "none") return;
+        if (this.value == "") {
+            this.parentNode.remove();
+            return;
+        }
+        this.previousElementSibling.innerText = this.value;
+        this.previousElementSibling.classList.remove("hide");
+        this.classList.add("hide");
+        update_entry(get_entry());
+    }
+    input.onkeydown = function(e) {
+        if (this.value == "") return;
+        if (e.key == "Enter") {
+            this.previousElementSibling.innerText = this.value;
+            this.previousElementSibling.classList.remove("hide");
+            this.classList.add("hide");
+            update_entry(get_entry());
+        }
+    }
+    span.onclick = function() { this.parentNode.classList.toggle("selected"); }
+    span.ondblclick = function() {
+        this.parentNode.classList.remove("selected");
+        this.classList.add("hide");
+        this.nextElementSibling.value = this.innerText;
+        this.innerText = "";
+        this.nextElementSibling.classList.remove("hide");
+        this.nextElementSibling.focus();
+    }
+    item.appendChild(span);
+    item.appendChild(input);
+    return item;
+}
+
+function display_entry(data) {
+    clear_def_region();
+    def_region.children[0].innerText = "Definition:";
+    usage_region.children[0].innerText = "Usage:";
+    pronoun_box.classList.remove("hide");
+    keyword_box.innerText = data.Keyword;
+    optional_input_set_text(pronoun_box, data.Pronounciation);
+    for (let def of data.Definition) {
+        def_list.appendChild(make_list_item(def.join(", ")));
+    }
+    let btn = document.createElement("button")
+    btn.innerText = "➕";
+    function btn_click() {
+        let item = make_list_item("");
+        item.firstChild.classList.add("hide");
+        item.lastChild.classList.remove("hide");
+        this.previousElementSibling.appendChild(item);
+        item.lastChild.focus();
+    }
+    btn.onclick = btn_click;
+    def_region.appendChild(btn);
+    for (let usage of data.Usage) {
+        usage_list.appendChild(make_list_item(usage));
+    }
+    let btn2 = btn.cloneNode(true);
+    btn2.onclick = btn_click;
+    usage_region.appendChild(btn2);
 }
 
 function add_suggestion(text) {
@@ -81,26 +218,6 @@ function display_suggestion(suggestions) {
     else toggle_suggestion(true);
 }
 
-function display_entry(data) {
-    // input_box.value = data.Keyword;
-    def_header.innerText = "Definition";
-    usage_header.innerText = "Usage";
-    keyword_box.innerText = data.Keyword;
-    pronoun_box.innerText = data.Pronounciation === "" ? "----------" : data.Pronounciation;
-    def_list.innerHTML = "";
-    for (let def of data.Definition) {
-        let list_item = document.createElement("li");
-        list_item.innerText = def.join(", ");
-        def_list.appendChild(list_item);
-    }
-    usage_list.innerHTML = "";
-    for (let usage of data.Usage) {
-        let list_item = document.createElement("li");
-        list_item.innerText = usage;
-        usage_list.appendChild(list_item);
-    }
-}
-
 function suggestion_list_has_focus() {
     for (let child of suggestion_list.children) {
         console.assert(child.children[0].tagName === "BUTTON");
@@ -122,7 +239,7 @@ input_box.addEventListener('focusout', function(ev) {
 });
 input_box.addEventListener('keydown', function(ev) {
     switch(ev.key) {
-    case 'Enter': 
+    case 'Enter':
         if (input_box.value !== "") {
             search_key(input_box.value);
         }
