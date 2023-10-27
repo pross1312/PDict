@@ -52,7 +52,7 @@ pronoun_box.children[0].onblur = pronoun_box.children[0].onkeydown;
 
 http.addEventListener("load", function() {
     if (this.status == 404) {
-        display_entry({Keyword: input_box.value});
+        display_entry({Keyword: this.responseText.split("No entry for ")[1], Pronounciation: "", Definition: [], Usage: []});
         return;
     } else if (this.getResponseHeader("Content-Type").includes("application/json")) {
         data = JSON.parse(this.response);
