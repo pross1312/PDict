@@ -269,11 +269,25 @@ function group_on_value_change() {
         this.nextElementSibling.focus();
     }
 };
+
+function query_group() {
+    return ["Verb", "Noun", "Adjective"];
+}
+
 function group_button_click() {
     if (this.innerText === "+") {
         this.innerText = "─";
         this.parentNode.children[0].classList.remove("hide");
-        group_region.appendChild(make_group_selector(["qwjieo", "jqiowe"]));
+        let selector = this.parentNode.children[0];
+        let groups = query_group();
+        for (let group of groups) {
+            let option = document.createElement("option");
+            option.value = group;
+            option.innerText = group;
+            selector.insertBefore(option, selector.lastElementChild);
+        }
+        selector.value = groups[0]
+        group_region.appendChild(make_group_selector(null));
     } else {
         this.innerText = "+";
         let selector = this.parentNode.children[0];
@@ -306,18 +320,25 @@ function group_input_keydown(e) {
     }
 }
 
-function make_group_selector(groups) {
+function make_group_selector(value) {
     let span = document.createElement("span");
     span.classList.toggle("group-container");
     let selector = document.createElement("select");
-    selector.classList.toggle("group")
-    selector.classList.toggle("hide")
+    selector.classList.add("group")
     selector.onchange = group_on_value_change;
-    for (let group of groups) {
-        let option = document.createElement("option");
-        option.value = group;
-        option.innerText = group;
-        selector.appendChild(option);
+    selector.onclick = function() {
+        this.innerText = "";
+        for (let group of query_group()) {
+            let option = document.createElement("option");
+            option.value = group;
+            option.innerText = group;
+            this.insertBefore(option, this.lastChild);
+        }
+        let new_group = document.createElement("option");
+        new_group.classList.add("new-group");
+        new_group.value = "";
+        new_group.innerText = "+ New..";
+        this.appendChild(new_group);
     }
     let new_group = document.createElement("option");
     new_group.classList.add("new-group");
@@ -327,11 +348,21 @@ function make_group_selector(groups) {
     let input = document.createElement("input");
     input.type = "text";
     input.spellcheck = false;
-    input.classList.toggle("hide");
+    input.classList.add("hide");
     input.onkeydown = group_input_keydown;
     input.size = 10;
     let button = document.createElement("button");
-    button.innerText = "+";
+    if (typeof(value) == "string" && value.trim() != "") {
+        let option = document.createElement("option");
+        option.value = value;
+        option.innerText = value;
+        selector.insertBefore(option, selector.lastElementChild);
+        selector.value = value.trim();
+        button.innerText = "─";
+    } else {
+        selector.classList.add("hide")
+        button.innerText = "+";
+    }
     button.onclick = group_button_click;
     span.appendChild(selector);
     span.appendChild(input);
@@ -346,4 +377,4 @@ if (url_params.get("key") !== null) {
     query_text(url_params.get("key"));
     toggle_suggestion(false);
 }
-group_region.appendChild(make_group_selector(["jqwioe", "jioqwe"]));
+group_region.appendChild(make_group_selector(null));

@@ -107,7 +107,7 @@ html, body {
 #group-region {
     width: 90%;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     grid-template-rows: auto;
     gap: 5px;
 }
@@ -202,6 +202,11 @@ html, body {
 h3    { margin: 0px; }
 .hide { display: none !important; }
 input { font-size: inherit; }
+@media screen and (max-width: 800px) {
+    #group-region {
+        grid-template-columns: repeat(1, 1fr) !important;
+    }
+}
 @media screen and (min-width: 1500px) {
     html, body {
         font-size: 35px;
