@@ -2,6 +2,8 @@ const http = new XMLHttpRequest();
 const server_query_addr = "http://localhost:9999/query";
 const server_suggestion_addr = "http://localhost:9999/suggest";
 const server_update_addr = "http://localhost:9999/update";
+const server_add_group_addr = "http://localhost:9999/add-group";
+const server_list_group_addr = "http://localhost:9999/list-group";
 let input_box = document.getElementById("main-input");
 let suggestion_list = document.getElementById("suggestion-list");
 let on_display_def = false;
@@ -13,6 +15,7 @@ let usage_list = document.getElementById("usage-list");
 let usage_region = document.getElementById("usage-region");
 let keyword_box = document.getElementById("keyword");
 let pronoun_box = document.getElementById("pronounciation");
+let group_region = document.getElementById("group-region");
 
 function optional_input_set_text(op_input, text) {
     let input = op_input.children[0];
@@ -109,6 +112,7 @@ function get_entry() {
         entry.Pronounciation = pronoun_box.children[0].value;
         entry.Definition = [];
         entry.Usage = [];
+        entry.Group = [];
         for (let def of document.querySelectorAll("#def-list li span")) {
             entry.Definition.push(def.innerText.split(", "));
         }
@@ -134,17 +138,6 @@ function make_list_item(text) {
     span.innerText = text;
     let input = document.createElement("input");
     input.classList.add("hide");
-    input.onblur = function(e) {
-        if (this.style.display === "none") return;
-        if (this.value == "") {
-            this.parentNode.remove();
-            return;
-        }
-        this.previousElementSibling.innerText = this.value;
-        this.previousElementSibling.classList.remove("hide");
-        this.classList.add("hide");
-        update_entry(get_entry());
-    }
     input.onkeydown = function(e) {
         if (this.value == "") return;
         if (e.key == "Enter") {
@@ -269,6 +262,83 @@ window.setInterval(function() { // suggestion
     }
 }, 100);
 
+function group_on_value_change() {
+    if (this.value.trim() == "") {
+        this.classList.add("hide");
+        this.nextElementSibling.classList.remove("hide");
+        this.nextElementSibling.focus();
+    }
+};
+function group_button_click() {
+    if (this.innerText === "+") {
+        this.innerText = "─";
+        this.parentNode.children[0].classList.remove("hide");
+        group_region.appendChild(make_group_selector(["qwjieo", "jqiowe"]));
+    } else {
+        this.innerText = "+";
+        let selector = this.parentNode.children[0];
+        selector.value = selector.children[0].value;
+        selector.classList.add("hide");
+        this.parentNode.children[1].classList.add("hide");
+        if (group_region.children.length > 1) {
+            this.parentNode.remove();
+        }
+    }
+}
+
+function group_input_keydown(e) {
+    if (e.key == "Enter") {
+        this.value = this.value.trim();
+        if (this.value !== "") {
+            let new_option = document.createElement("option");
+            new_option.value = this.value;
+            new_option.innerText = this.value;
+            let selector = this.parentNode.children[0];
+            selector.insertBefore(new_option, selector.firstChild);
+            selector.value = this.value;
+            selector.classList.remove("hide");
+            this.classList.add("hide");
+            this.value = "";
+        } else {
+            this.classList.add("hide");
+            this.nextElementSibling.innerText = "+";
+        }
+    }
+}
+
+function make_group_selector(groups) {
+    let span = document.createElement("span");
+    span.classList.toggle("group-container");
+    let selector = document.createElement("select");
+    selector.classList.toggle("group")
+    selector.classList.toggle("hide")
+    selector.onchange = group_on_value_change;
+    for (let group of groups) {
+        let option = document.createElement("option");
+        option.value = group;
+        option.innerText = group;
+        selector.appendChild(option);
+    }
+    let new_group = document.createElement("option");
+    new_group.classList.add("new-group");
+    new_group.value = "";
+    new_group.innerText = "+ New..";
+    selector.appendChild(new_group);
+    let input = document.createElement("input");
+    input.type = "text";
+    input.spellcheck = false;
+    input.classList.toggle("hide");
+    input.onkeydown = group_input_keydown;
+    input.size = 10;
+    let button = document.createElement("button");
+    button.innerText = "+";
+    button.onclick = group_button_click;
+    span.appendChild(selector);
+    span.appendChild(input);
+    span.appendChild(button);
+    return span;
+}
+
 // parse search param and display query result
 const query_str = window.location.search;
 const url_params = new URLSearchParams(query_str);
@@ -276,3 +346,4 @@ if (url_params.get("key") !== null) {
     query_text(url_params.get("key"));
     toggle_suggestion(false);
 }
+group_region.appendChild(make_group_selector(["jqwioe", "jioqwe"]));

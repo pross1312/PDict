@@ -104,6 +104,70 @@ html, body {
 }
 #keyword { margin: 0px; padding: 0px; }
 
+#group-region {
+    width: 90%;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: auto;
+    gap: 5px;
+}
+
+.group-container {
+    width: fit-content;
+    background-color: #333;
+    display: block; 
+    font-size: 0px;
+    position: relative;
+    padding: 5px;
+    color: white;
+}
+.group-container .group {
+    -moz-appearance: none; /* Firefox */
+    -webkit-appearance: none; /* Safari and Chrome */
+    appearance: none;
+    color: white;
+    border: none;
+    display: inline-block;
+    position: relative;
+    font-size: 0.75rem;
+    width: 6em;
+    text-align: center;
+    background-color: inherit;
+    margin-right: 0px;
+    z-index: 2;
+}
+.group-container .group option {
+    background-color: inherit;
+}
+.group-container input {
+    font-size: 0.75rem;
+    width: 4em;
+    background-color: inherit;
+    border: 1px white solid;
+    color: inherit;
+    padding-left: 5px;
+}
+.group-container button {
+    text-align: center;
+    display: inline-block;
+    margin-left: 0px;
+    background-color: transparent;
+    color: white;
+    border: none;
+    box-shadow: none;
+    padding: none;
+    width: 1.3em;
+    text-align: center;
+}
+.group-container button:hover {
+    background-color: #222;
+    cursor: pointer;
+}
+
+#group-header {
+    padding: 0px 0px 0px 10px;
+}
+
 .list-items {
     list-style-type: square;
     margin: 0px;
@@ -132,14 +196,17 @@ html, body {
     color: white;
     padding: 0px 0px 0px 10px;
 }
-#data-region .list-region .header { color: #888; }
+.header { color: #888; }
 
 
 h3    { margin: 0px; }
 .hide { display: none !important; }
 input { font-size: inherit; }
-@media screen and (min-width: 1550) {
+@media screen and (min-width: 1500px) {
     html, body {
         font-size: 35px;
+    }
+    #group-region {
+        grid-template-columns: repeat(8, 1fr) !important;
     }
 }

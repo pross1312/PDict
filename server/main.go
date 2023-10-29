@@ -2,8 +2,6 @@ package main
 
 import (
     "math/rand"
-    "slices"
-    "sync"
     "runtime"
     "strings"
     "path/filepath"
@@ -16,12 +14,12 @@ import (
 
 type Entry struct {
     Keyword string
-    Definition [][]string
     Pronounciation string
+    Definition [][]string
     Usage []string
+    Group []string
 }
 type Dictionary = map[string]Entry
-type RelatedWords = map[string][]string
 type MyServer struct {}
 
 const (
@@ -33,13 +31,12 @@ const (
 var (
     SERVER_DATA_FILE_PATH = "dictionary_data"
     Dict = make(Dictionary)
+    Group = make(map[string][]string)
     content_types = map[string]string{
         ".html": "text/html",
         ".css": "text/css",
         ".js": "text/javascript",
     }
-    related_word_mutex sync.Mutex // for thread save because http.ListenAndServe probably run on another goroutine
-    Related_words = make(RelatedWords)
     used_words []string
     unused_words []string
 )
@@ -52,23 +49,6 @@ func prettyPrint(i interface{}) string {
 func dump_request(req *http.Request) {
     req_str, _ := httputil.DumpRequest(req, true)
     fmt.Println(string(req_str))
-}
-
-func update_related_words_for_key(word string) {
-    if word == "" {
-        fmt.Println("[WARNING] Client try to update with empty key")
-        return
-    }
-    for _, value := range word {
-        key := string(value)
-        related_word_mutex.Lock()
-        if Related_words[key] == nil { Related_words[key] = make([]string, 0, INIT_ARRAY_BUFFER) }
-        temp := Related_words[key]
-        if index := slices.Index(temp, key); index != -1 {
-            Related_words[key] = append(temp, word)
-        }
-        related_word_mutex.Unlock()
-    }
 }
 
 func process_suggest(wt http.ResponseWriter, req *http.Request) {
@@ -268,11 +248,12 @@ func main() {
     Check_err(err, false, fmt.Sprintf("Can't read dictionary from file `%s`", SERVER_DATA_FILE_PATH))
     json.Unmarshal(dict_data, &Dict)
     used_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
-    unused_words = make([]string, len(Dict), len(Dict) + INIT_ARRAY_BUFFER)
-    i := 0;
-    for _, v := range Dict {
-        unused_words[i] = v.Keyword
-        i++
+    unused_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
+    for k, v := range Dict {
+        unused_words = append(unused_words, k)
+        for _, g := range v.Group {
+            Group[g] = append(Group[g], v.Keyword)
+        }
     }
     fmt.Println(unused_words);
     start_default_browser()
