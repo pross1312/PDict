@@ -11,6 +11,21 @@ let usage_header             = document.getElementById("usage-header");
 let show_answer_button       = document.getElementById("show-answer");
 let is_show                  = false;
 
+async function send_request(addr) {
+    const response = await fetch(addr);
+    if (response.status == 200) {
+        if (response.headers.get("Content-Type").includes("application/json")) {
+            const data = await response.json();
+            return data;
+        } else {
+            const str = await response.text();
+            return str;
+        }
+    } else {
+        throw new Error("Can't recognize response body data");
+    }
+}
+
 http.addEventListener("load", function() {
     if (this.status == 404) {
         keyword_box.innerText = "No definition found"
@@ -21,7 +36,6 @@ http.addEventListener("load", function() {
         if (data == null) {
             console.log(`[ERROR] Can't regconize data ${this.responseText}`);
         } else if (data.Keyword != null) {
-            display_entry(data);
         }
     } else if (this.responseText === "No words to learn") {
         keyword_box.innerText = this.responseText;
@@ -30,12 +44,20 @@ http.addEventListener("load", function() {
     }
 })
 
-function next_word() {
-    pronoun_box.classList.remove("show");
-    def_region.classList.remove("show");
-    usage_region.classList.remove("show");
-    http.open("GET", server_nextword_addr);
-    http.send();
+async function next_word() {
+    try {
+        let result = await send_request(server_nextword_addr);
+        if (result === "No words to learn") {
+            keyword_box.innerText = result;
+        } else {
+            display_entry(result);
+        }
+        pronoun_box.classList.remove("show");
+        def_region.classList.remove("show");
+        usage_region.classList.remove("show");
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 function display_entry(data) {
@@ -67,10 +89,10 @@ show_answer_button.onclick = function(e) {
 window.onkeydown = function(e) {
     switch (e.key) {
     case "ArrowRight":
-        next_word();
+        if (pronoun_box.classList.contains("show")) next_word();
+        else show_answer_button.click();
         break;
     default:
-        console.log(e.key);
     }
 }
 

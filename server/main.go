@@ -1,6 +1,7 @@
 package main
 
 import (
+    "slices"
     "math/rand"
     "runtime"
     "strings"
@@ -31,7 +32,11 @@ const (
 var (
     SERVER_DATA_FILE_PATH = "dictionary_data"
     Dict = make(Dictionary)
-    Group = make(map[string][]string)
+    Group = map[string][]string{
+        "Verb": []string{},
+        "Noun": []string{},
+        "Adjective": []string{},
+    }
     content_types = map[string]string{
         ".html": "text/html",
         ".css": "text/css",
@@ -178,6 +183,22 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             process_list(wt, req)
         } else if (req.URL.Path == "/nextword") {
             process_nextword(wt, req)
+        } else if (req.URL.Path == "/list-group") {
+            // TODO: check for data race
+            groups := make([]string, 0, len(Group))
+            for k := range Group {
+                groups = append(groups, k)
+            }
+            fmt.Println("[INFO]", groups);
+            json_data, err := json.Marshal(struct{ Group []string }{ groups })
+            if Check_err(err, false, "Can't parse json for `nextword` request") {
+                wt.WriteHeader(http.StatusInternalServerError)
+                wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't parse json", err.Error())))
+            } else {
+                wt.Header().Set("Content-Type", "application/json")
+                wt.WriteHeader(http.StatusOK)
+                wt.Write(json_data)
+            }
         } else {
             serve_file(wt, req)
         }
@@ -190,6 +211,11 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't read body", err.Error())))
         } else {
             Dict[entry.Keyword] = entry;
+            for _, g := range entry.Group {
+                if slices.Index(Group[g], entry.Keyword) == -1 {
+                    Group[g] = append(Group[g], entry.Keyword)
+                }
+            }
             used_words = append(used_words, entry.Keyword)
             fmt.Printf("[INFO] Update %s\n", prettyPrint(entry))
             fmt.Fprint(wt, "[INFO] Successfully update")
@@ -250,6 +276,10 @@ func main() {
     used_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
     unused_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
     for k, v := range Dict {
+        if v.Group == nil {
+            v.Group = make([]string, 0, INIT_ARRAY_BUFFER);
+            Dict[k] = v;
+        }
         unused_words = append(unused_words, k)
         for _, g := range v.Group {
             Group[g] = append(Group[g], v.Keyword)

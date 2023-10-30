@@ -56,7 +56,7 @@ async function send_request(addr) {
     const response = await fetch(addr);
     if (response.status == 404) {
         const str = await response.text();
-        if (str.startsWith("No entry for ")) return {Keyword: str.split("No entry for ")[1], Pronounciation: "", Definition: [], Usage: []}; // make new blank entry
+        if (str.startsWith("No entry for ")) return {Keyword: str.split("No entry for ")[1], Pronounciation: "", Definition: [], Usage: [], Group: []}; // make new blank entry
         return str;
     } else if (response.headers.get("Content-Type").includes("application/json")) {
         const data = await response.json();
@@ -124,6 +124,9 @@ function get_entry() {
         for (let usage of document.querySelectorAll("#usage-list li span")) {
             entry.Usage.push(usage.innerText);
         }
+        for (let group of document.querySelectorAll(".group-container .group")) {
+            if (group.classList.contains("hide") == false) entry.Group.push(group.value.trim());
+        }
         return entry;
     } else alert("Invalid, something went wrong when trying to get entry");
 }
@@ -173,13 +176,21 @@ function display_entry(data) {
     def_region.children[0].innerText = "Definition:";
     usage_region.children[0].innerText = "Usage:";
     pronoun_box.classList.remove("hide");
+    // display keyword
     keyword_box.innerText = data.Keyword;
+    // display pronounciation
     optional_input_set_text(pronoun_box, data.Pronounciation);
     group_region.classList.remove("hide");
     document.getElementById("group-header").classList.remove("hide");
+    // diplay group
+    data.Group.forEach(x => {
+        group_region.appendChild(make_group_selector(x));
+    });
+    group_region.appendChild(make_group_selector(null));
     for (let def of data.Definition) {
         def_list.appendChild(make_list_item(def.join(", ")));
     }
+    // definition && usage
     let btn = document.createElement("button")
     btn.innerText = "➕";
     function btn_click() {
@@ -276,6 +287,8 @@ function group_on_value_change() {
         this.classList.add("hide");
         this.nextElementSibling.classList.remove("hide");
         this.nextElementSibling.focus();
+    } else {
+        post_entry(get_entry());
     }
 };
 
@@ -288,13 +301,16 @@ async function query_groups() {
     }
 }
 
-function group_button_click() {
+function group_button_click(e) {
+    e.stopPropagation();
     if (this.innerText === "+") {
         this.innerText = "─";
         this.parentNode.children[0].classList.remove("hide");
         let selector = this.parentNode.children[0];
         update_group_selector(selector);
         selector.value = selector.children[0].value
+        group_region.appendChild(make_group_selector(null));
+        post_entry(get_entry());
     } else {
         this.innerText = "+";
         let selector = this.parentNode.children[0];
@@ -304,6 +320,7 @@ function group_button_click() {
         if (group_region.children.length > 1) {
             this.parentNode.remove();
         }
+        post_entry(get_entry());
     }
 }
 
@@ -320,6 +337,7 @@ function group_input_keydown(e) {
             selector.classList.remove("hide");
             this.classList.add("hide");
             this.value = "";
+            post_entry(get_entry());
         } else {
             this.classList.add("hide");
             this.nextElementSibling.innerText = "+";
@@ -327,6 +345,7 @@ function group_input_keydown(e) {
     }
 }
 function update_group_selector(selector) {
+    let val = selector.value;
     selector.innerText = "";
     for (let group of current_groups) {
         let option = document.createElement("option");
@@ -339,6 +358,8 @@ function update_group_selector(selector) {
     new_group.value = "";
     new_group.innerText = "+ New..";
     selector.appendChild(new_group);
+    if (!current_groups.includes(val)) selector.value = current_groups[0];
+    else selector.value = val;
 }
 
 function make_group_selector(value) {
@@ -347,7 +368,8 @@ function make_group_selector(value) {
     let selector = document.createElement("select");
     selector.classList.add("group")
     selector.onchange = group_on_value_change;
-    selector.onclick = function() {
+    selector.onpointerdown = async function() {
+        await query_groups();
         update_group_selector(this);
     }
     update_group_selector(selector);
@@ -356,14 +378,16 @@ function make_group_selector(value) {
     input.spellcheck = false;
     input.classList.add("hide");
     input.onkeydown = group_input_keydown;
+    input.onclick = function(e) {e.stopPropagation();};
     input.size = 10;
     let button = document.createElement("button");
     if (typeof(value) == "string" && value.trim() != "") {
+        value = value.trim();
         let option = document.createElement("option");
         option.value = value;
         option.innerText = value;
         selector.insertBefore(option, selector.lastElementChild);
-        selector.value = value.trim();
+        selector.value = value;
         button.innerText = "─";
     } else {
         selector.classList.add("hide")
@@ -376,6 +400,7 @@ function make_group_selector(value) {
     return span;
 }
 
+query_groups();
 // parse search param and display query result
 const query_str = window.location.search;
 const url_params = new URLSearchParams(query_str);
@@ -383,5 +408,3 @@ if (url_params.get("key") !== null) {
     query_text(url_params.get("key"));
     toggle_suggestion(false);
 }
-group_region.appendChild(make_group_selector(null));
-query_groups();

@@ -6,24 +6,27 @@ let right_list = document.getElementById("list-right");
 let center_list = document.getElementById("list-center");
 let remove_list = [];
 
-http.addEventListener("load", function() {
-    if (http.status == 404) {
-        return
-    } else if (http.getResponseHeader("Content-Type") === "application/json") {
-        data = JSON.parse(this.response);
-        if (data == null) {
-            console.log(`[ERROR] Can't regconize data ${this.responseText}`);
-        } else {
-            display(data);
-        }
-    } else if (http.responseText === "[INFO] Successfully delete") {
-        list();
+async function send_request(addr) {
+    const response = await fetch(addr);
+    if (response.status == 404) {
+        const str = await response.text();
+        if (str.startsWith("No entry for ")) return {Keyword: str.split("No entry for ")[1], Pronounciation: "", Definition: [], Usage: [], Group: []}; // make new blank entry
+        return str;
+    } else if (response.headers.get("Content-Type").includes("application/json")) {
+        const data = await response.json();
+        return data;
+    } else {
+        throw new Error("Can't recognize response body data");
     }
-})
+}
 
-function list() {
-    http.open("GET", server_list_addr);
-    http.send();
+async function list() {
+    try {
+        let result = await send_request(server_list_addr);
+        display(result);
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 function display(data) {
