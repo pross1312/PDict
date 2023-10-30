@@ -2,7 +2,6 @@ const http = new XMLHttpRequest();
 const server_query_addr = "http://localhost:9999/query";
 const server_suggestion_addr = "http://localhost:9999/suggest";
 const server_update_addr = "http://localhost:9999/update";
-const server_add_group_addr = "http://localhost:9999/add-group";
 const server_list_group_addr = "http://localhost:9999/list-group";
 let input_box = document.getElementById("main-input");
 let suggestion_list = document.getElementById("suggestion-list");
@@ -16,6 +15,8 @@ let usage_region = document.getElementById("usage-region");
 let keyword_box = document.getElementById("keyword");
 let pronoun_box = document.getElementById("pronounciation");
 let group_region = document.getElementById("group-region");
+let current_groups = [];
+let groups_change = false;
 
 function optional_input_set_text(op_input, text) {
     let input = op_input.children[0];
@@ -51,32 +52,36 @@ pronoun_box.children[0].onkeydown = function(e) {
 }
 pronoun_box.children[0].onblur = pronoun_box.children[0].onkeydown;
 
-
-
-http.addEventListener("load", function() {
-    if (this.status == 404) {
-        display_entry({Keyword: this.responseText.split("No entry for ")[1], Pronounciation: "", Definition: [], Usage: []});
-        return;
-    } else if (this.getResponseHeader("Content-Type").includes("application/json")) {
-        data = JSON.parse(this.response);
-        if (data == null) {
-            console.log(`[ERROR] Can't regconize data ${this.responseText}`);
-        } else if (data.Keyword != null) {
-            display_entry(data);
-        } else if (data.Suggestion != null) {
-            display_suggestion(data.Suggestion);
-        }
+async function send_request(addr) {
+    const response = await fetch(addr);
+    if (response.status == 404) {
+        const str = await response.text();
+        if (str.startsWith("No entry for ")) return {Keyword: str.split("No entry for ")[1], Pronounciation: "", Definition: [], Usage: []}; // make new blank entry
+        return str;
+    } else if (response.headers.get("Content-Type").includes("application/json")) {
+        const data = await response.json();
+        return data;
+    } else {
+        throw new Error("Can't recognize response body data");
     }
-})
-
-function query_text(text) {
-    http.open("GET", server_query_addr + `?key=${text}`);
-    http.send();
 }
 
-function suggest_text(text) {
-    http.open("GET", server_suggestion_addr + `?key=${text}`);
-    http.send();
+async function query_text(key) {
+    try {
+        const response = await send_request(server_query_addr + `?key=${key}`);
+        display_entry(response);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+async function suggest_text(text) {
+    try {
+        const response = await send_request(server_suggestion_addr + `?key=${text}`);
+        display_suggestion(response);
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 function toggle_suggestion(show) {
@@ -101,7 +106,7 @@ window.onkeydown = function(e) {
         let deleting_elements = document.querySelectorAll(".list-items li.selected")
         if (deleting_elements.length != 0) {
             for (let element of deleting_elements) element.remove();
-            update_entry(get_entry());
+            post_entry(get_entry());
         }
     }
 }
@@ -122,7 +127,8 @@ function get_entry() {
         return entry;
     } else alert("Invalid, something went wrong when trying to get entry");
 }
-function update_entry(entry) {
+
+function post_entry(entry) {
     let data = JSON.stringify(entry);
     if (data == null) {
         console.log("Invalid json body");
@@ -132,6 +138,7 @@ function update_entry(entry) {
         http.send(data);
     }
 }
+
 function make_list_item(text) {
     let item = document.createElement("li");
     let span = document.createElement("span");
@@ -144,7 +151,7 @@ function make_list_item(text) {
             this.previousElementSibling.innerText = this.value;
             this.previousElementSibling.classList.remove("hide");
             this.classList.add("hide");
-            update_entry(get_entry());
+            post_entry(get_entry());
         }
     }
     span.onclick = function() { this.parentNode.classList.toggle("selected"); }
@@ -168,6 +175,8 @@ function display_entry(data) {
     pronoun_box.classList.remove("hide");
     keyword_box.innerText = data.Keyword;
     optional_input_set_text(pronoun_box, data.Pronounciation);
+    group_region.classList.remove("hide");
+    document.getElementById("group-header").classList.remove("hide");
     for (let def of data.Definition) {
         def_list.appendChild(make_list_item(def.join(", ")));
     }
@@ -270,8 +279,13 @@ function group_on_value_change() {
     }
 };
 
-function query_group() {
-    return ["Verb", "Noun", "Adjective"];
+async function query_groups() {
+    try {
+        const response = await send_request(server_list_group_addr);
+        current_groups = response.Group;
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 function group_button_click() {
@@ -279,15 +293,8 @@ function group_button_click() {
         this.innerText = "─";
         this.parentNode.children[0].classList.remove("hide");
         let selector = this.parentNode.children[0];
-        let groups = query_group();
-        for (let group of groups) {
-            let option = document.createElement("option");
-            option.value = group;
-            option.innerText = group;
-            selector.insertBefore(option, selector.lastElementChild);
-        }
-        selector.value = groups[0]
-        group_region.appendChild(make_group_selector(null));
+        update_group_selector(selector);
+        selector.value = selector.children[0].value
     } else {
         this.innerText = "+";
         let selector = this.parentNode.children[0];
@@ -319,6 +326,20 @@ function group_input_keydown(e) {
         }
     }
 }
+function update_group_selector(selector) {
+    selector.innerText = "";
+    for (let group of current_groups) {
+        let option = document.createElement("option");
+        option.value = group;
+        option.innerText = group;
+        selector.insertBefore(option, selector.lastChild);
+    }
+    let new_group = document.createElement("option");
+    new_group.classList.add("new-group");
+    new_group.value = "";
+    new_group.innerText = "+ New..";
+    selector.appendChild(new_group);
+}
 
 function make_group_selector(value) {
     let span = document.createElement("span");
@@ -327,24 +348,9 @@ function make_group_selector(value) {
     selector.classList.add("group")
     selector.onchange = group_on_value_change;
     selector.onclick = function() {
-        this.innerText = "";
-        for (let group of query_group()) {
-            let option = document.createElement("option");
-            option.value = group;
-            option.innerText = group;
-            this.insertBefore(option, this.lastChild);
-        }
-        let new_group = document.createElement("option");
-        new_group.classList.add("new-group");
-        new_group.value = "";
-        new_group.innerText = "+ New..";
-        this.appendChild(new_group);
+        update_group_selector(this);
     }
-    let new_group = document.createElement("option");
-    new_group.classList.add("new-group");
-    new_group.value = "";
-    new_group.innerText = "+ New..";
-    selector.appendChild(new_group);
+    update_group_selector(selector);
     let input = document.createElement("input");
     input.type = "text";
     input.spellcheck = false;
@@ -378,3 +384,4 @@ if (url_params.get("key") !== null) {
     toggle_suggestion(false);
 }
 group_region.appendChild(make_group_selector(null));
+query_groups();
