@@ -1,47 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Some name</title>
-    <link rel="stylesheet" href="./style.css">
-    <link rel="stylesheet" href="./common.css">
-    <script src="./index.js" defer></script>
+    <script src="./jquery-3.7.1.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./main.js" defer></script>
+    <title>PDict</title>
 </head>
 <body>
-    <div id="nav-region">
-        <ul id="nav-list">
-            <li class="nav-item"><a href="./index.html">Search</a></li>
-            <li class="nav-item"><a href="./list-page/list.html">List</a></li>
-            <li class="nav-item"><a href="./learn-page/learn.html">Learn</a></li>
+    <nav class="navbar navbar-expand p-0 bg-secondary bg-gradient">
+        <a href="/" class="bg-success fw-bolder px-3 navbar-brand">PDict</a>
+        <ul class="navbar-nav">
+            <li class="navbar-item">
+                <a href="/" class="btn fw-bold">Home</a>
+            </li>
+            <li class="navbar-item">
+                <a href="/list" class="btn fw-bold">List</a>
+            </li>
+            <li class="navbar-item">
+                <a href="/learn" class="btn fw-bold">Learn</a>
+            </li>
         </ul>
+    </nav>
+    <iframe name="discard-frame" class="d-none"></iframe>
+    <div class="container-lg mt-5">
+        <form action="#" method="GET" class="d-flex" role="search" target="discard-frame" id="search-form">
+            <input class="form-control form-control-lg me-2" type="search" name="key" placeholder="Search" aria-label="Search">
+            <button class="btn btn-light" id="search-submit" type="submit" form="search-form">Search</button>
+        </form>
     </div>
-    <div id="input-region">
-        <input type="text" id="main-input" type="text" lang="jp" autofocus>
-    </div>
-    <div id="suggestion-region">
-        <dl id="suggestion-list">
-        </dl>
-    </div>
-    <div class="grow-region" id="data-region">
-        <div class="middle"><h1 id="keyword"></h1></div>
-        <div class="middle">
-            <span class="optional-input hide" id="pronounciation">
-                <input class="hide" type="text" spellcheck="false">
-                <button>➕</button>
+    <div class="container-lg mt-5">
+        <form action="#" class="" target="discard-frame" id="data-form" method="GET">
+            <input class="form-control text-light fs-1 fw-bolder shadow-none text-center bg-transparent border-0" name="Keyword" readonly />
+            <input class="bg-transparent border-0 form-control text-center w-25 m-auto" name="Pronounciation" placeholder="-Add pronounciation-" />
+            <span class="btn-group d-flex-block flex-wrap" id="group-region">
+                <div class="d-flex ms-1">
+                    <div class="w-75 btn-group btn-group-sm d-flex border-1 border rounded-2 d-none">
+                        <input id="new-group-input" type="text" class="form-control form-control-sm border-0" value="IJOWJEQ"/>
+                        <button type="button" class="btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><p style="cursor: pointer;" class="existing-group dropdown-item m-0">Action</p></li>
+                            <li><p style="cursor: pointer;" class="existing-group dropdown-item m-0">Another action</p></li>
+                            <li><p style="cursor: pointer;" class="existing-group dropdown-item m-0">Something else here</p></li>
+                            <li><p style="cursor: pointer;" class="existing-group dropdown-item m-0">Separated link</p></li>
+                        </ul>
+                    </div>
+                    <div class="d-flex flex-column justify-content-center">
+                        <button id="new-group-button" type="button" class="btn btn-sm btn-secondary">+</button>
+                    </div>
+                </div>
             </span>
-        </div>
-        <h3 id="group-header" class="header hide">Group:</h3>
-        <div id="group-region" class="middle hide">
-        </div>
-        <div class="list-region grow-region" id="def-region">
-            <h3 class="header"></h3>
-            <ul class="list-items" id="def-list"></ul>
-        </div>
-        <div class="list-region grow-region" id="usage-region">
-            <h3 class="header"></h3>
-            <ul class="list-items" id="usage-list"></ul>
-        </div>
+            <label class="d-block">Definition</label>
+            <div class="mt-2 mb-4">
+                <ul class="list-item">
+                    <li><input id="new-def" class="form-control" placeholder="Add Definition"></li>
+                </ul>
+            </div>
+            <label>Usage</label>
+            <div class="mt-2 mb-4">
+                <ul>
+                    <li><input id="new-usage" class="form-control" placeholder="Add Usage"></li>
+                </ul>
+            </div>
+            <button type="submit" id="data-submit" class="d-none"></button>
+        </form>
     </div>
 </body>
 </html>

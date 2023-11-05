@@ -218,7 +218,7 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             }
             used_words = append(used_words, entry.Keyword)
             fmt.Printf("[INFO] Update %s\n", prettyPrint(entry))
-            fmt.Fprint(wt, "[INFO] Successfully update")
+            fmt.Fprintf(wt, "[INFO] Successfully update %s\n", entry.Keyword)
             save_dict(SERVER_DATA_FILE_PATH);
         }
     case "DELETE":
