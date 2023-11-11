@@ -6,10 +6,11 @@
     <script src="./jquery-3.7.1.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="./test.css" rel="stylesheet">
     <script src="./main.js" defer></script>
     <title>PDict</title>
 </head>
-<body>
+<body style="font-size: 1rem">
     <nav class="navbar navbar-expand p-0 bg-secondary bg-gradient">
         <a href="/" class="bg-success fw-bolder px-3 navbar-brand">PDict</a>
         <ul class="navbar-nav">
@@ -32,10 +33,10 @@
         </form>
     </div>
     <div class="container-lg mt-5">
-        <form action="#" class="" target="discard-frame" id="data-form" method="GET">
+        <form action="#" class="d-none" target="discard-frame" id="data-form" method="GET">
             <input class="form-control text-light fs-1 fw-bolder shadow-none text-center bg-transparent border-0" name="Keyword" readonly />
             <input class="bg-transparent border-0 form-control text-center w-25 m-auto" name="Pronounciation" placeholder="-Add pronounciation-" />
-            <span class="btn-group d-flex-block flex-wrap" id="group-region">
+            <span class="btn-group d-flex-block flex-wrap mb-3" id="group-region">
                 <div class="d-flex ms-1">
                     <div class="w-75 btn-group btn-group-sm d-flex border-1 border rounded-2 d-none">
                         <input id="new-group-input" type="text" class="form-control form-control-sm border-0" value="IJOWJEQ"/>
@@ -54,13 +55,13 @@
                     </div>
                 </div>
             </span>
-            <label class="d-block">Definition</label>
+            <label class="d-block h5 fw-bold">Definition</label>
             <div class="mt-2 mb-4">
                 <ul class="list-item">
                     <li><input id="new-def" class="form-control" placeholder="Add Definition"></li>
                 </ul>
             </div>
-            <label>Usage</label>
+            <label class="d-block h5 fw-bold">Usage</label>
             <div class="mt-2 mb-4">
                 <ul>
                     <li><input id="new-usage" class="form-control" placeholder="Add Usage"></li>

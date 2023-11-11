@@ -25,6 +25,7 @@ $(function() {
         if (data.Keyword == null) alert("[ERROR] Invalid entry, keyword can't be null");
         if (data.Pronounciation != null) $("#data-form [name='Pronounciation']").val(data.Pronounciation);
         if (data.Definition != null) for (let def of data.Definition) {
+            if (def.length == 0) continue;
             $("#new-def").val(def.join(", "));
             $("#new-def").trigger("new-item");
         }
@@ -36,55 +37,60 @@ $(function() {
             add_group(group);
         }
     }
-    function list_input_item_dblclick() {
-        $(this).removeClass(["btn", "bg-secondary"]);
+    function list_input_item_click() {
+        $(this).removeClass(["btn"]);
         $(this).addClass("form-control");
         $(this).removeAttr("readonly");
     }
     function list_input_item_keydown(e) {
         if (e.key == "Enter") {
-            $(this).addClass(["btn", "bg-secondary"]);
+            $(this).addClass(["btn"]);
             $(this).removeClass("form-control");
             $(this).attr("readonly", true);
         }
     }
     $("#new-usage").on("new-item", function(e) {
-        const classes = "text-start text-light fw-bold list-input-item btn bg-secondary mb-1";
+        const classes = "text-start fs-3 text-light fw-bold list-input-item btn bg-none mb-1";
         const val = $(this).val();
         const input = `<input class="${classes}" placeholder="Usage" name="Usage[]" value="${val}" readonly/>`;
-        const button = `<button type="button" class="btn-close d-inline"></button>`;
-        let node = $(`<li>${button} ${input}</li>`);
+        const button = `<span class=" d-inline-flex flex-column justify-content-center"><button type="button" class="btn-close d-inline"></button></span>`;
+        let node = $(`<li class="d-flex">${button} ${input}</li>`);
         node.insertBefore($(this).parent())
-        node.find("input").on("dblclick", list_input_item_dblclick);
+        node.find("input").on("click", list_input_item_click);
         node.find("input").on("keydown", list_input_item_keydown);
-        node.find("button").on("click", function(){ $(this).parent().remove(); $("#data-submit").click(); });
+        node.find("button").on("click", function(){
+            node.remove();
+            $("#data-submit").click();
+        });
         $(this).val("");
     });
     $("#new-usage").on("keydown", function(e) {
         if (e.key == "Enter") {
-            $(this).trigger("new-item")
+            $(this).val($(this).val().trim());
+            if ($(this).val() == "") return false;
+            $(this).trigger("new-item");
         }
     });
     $("#new-def").on("new-item", function(e) {
-        $(this).val($(this).val().trim());
-        if ($(this).val() == "") return;
-        const classes = "text-start text-light fw-bold list-input-item btn bg-secondary mb-1";
+        const classes = "text-start fs-3 text-light fw-bold list-input-item btn bg-none mb-1";
         const val = $(this).val();
         const input = `<input class="${classes}" placeholder="Definition" name="Definition[]" value="${val}" readonly/>`;
-        const button = `<button type="button" class="btn-close d-inline"></button>`;
-        let node = $(`<li>${button}${input}</li>`);
+        const button = `<span class=" d-inline-flex flex-column justify-content-center"><button type="button" class="btn-close d-inline"></button></span>`;
+        let node = $(`<li class="d-flex">${button} ${input}</li>`);
         node.insertBefore($(this).parent())
-        node.find("input").on("dblclick", list_input_item_dblclick);
+        node.find("input").on("click", list_input_item_click);
         node.find("input").on("keydown", list_input_item_keydown);
         node.find("button.btn-close").on("click", function() {
-            $(this).parent().remove();
+            node.remove();
             $("#data-submit").click();
         });
         $(this).val("");
     });
     $("#new-def").on("keydown", function(e) {
         if (e.key == "Enter") {
-            $(this).trigger("new-item")
+            $(this).val($(this).val().trim());
+            if ($(this).val() == "") return false;
+            $(this).trigger("new-item");
         }
     });
     $("#data-submit").on("click", function(e) {
@@ -120,9 +126,6 @@ $(function() {
         const val = $(this).val().trim();
         $(this).val(val);
     });
-    $("input").on("keydown", function(e) { // do not submit on enter if input value is empty
-        if (e.key == "Enter" && $(this).val().trim() == "") return false;;
-    });
     function toggle_new_group(show_input) {
         $("#new-group-input").val("");
         if (!show_input) {
@@ -134,6 +137,12 @@ $(function() {
             $("#new-group-input").focus();
         }
     }
+    $("#new-group-input").on("blur", function(e) {
+        if ($(this).val().trim() === "") {
+            $(this).trigger("change"); // change will hide input if value is empty
+            return false;
+        }
+    });
     $("#new-group-input").on("keydown", function(e) {
         if (e.key == "Enter" && $(this).val().trim() === "") {
             $(this).trigger("change"); // change will hide input if value is empty
@@ -142,12 +151,20 @@ $(function() {
     });
     $("#new-group-button").on("click", function(e) { toggle_new_group(true); });
     function add_group(val) {
-        const group_classes = "border border-1 rounded-0 flex-grow-0 btn-sm btn btn-secondary px-0";
+        const group_classes = "border fs-6 border-1 rounded-0 flex-grow-0 btn-sm btn btn-secondary px-0";
         let new_group = $(`<input type="text" size="${val.length}" class="${group_classes}" name="Group[]" value=${val} readonly />`);
         new_group.on("dblclick", function() {
             $(this).remove();
             $("#data-submit").trigger("click");
         });
+        new_group.on("click", function() {
+            $(this).removeClass("btn-secondary");
+            $(this).addClass("btn-danger");
+        });
+        new_group.on("blur", function() {
+            $(this).addClass("btn-secondary");
+            $(this).removeClass("btn-danger");
+        })
         new_group.prependTo($("#group-region"));
     }
     $("#new-group-input").on("change", function(e) {
@@ -157,4 +174,3 @@ $(function() {
         else add_group(val);
     });
 })
-
