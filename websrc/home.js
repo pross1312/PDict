@@ -12,8 +12,14 @@ export default {
             this.Usage = [];
             this.Group = [];
         };
+        let all_groups = ref([]);
+        fetch("http://localhost:9999/list-group").then(async result => {
+            if (result.headers.get("Content-Type").match("application/json") != null) {
+                all_groups.value = (await result.json()).Group;
+            }
+        }).catch(err => {alert(err);});
         let entry_data = ref(new new_entry());
-        return {open_url, entry_data, has_data, new_entry};
+        return {open_url, entry_data, has_data, new_entry, all_groups};
     },
     components: {
         input_list, group_selector
@@ -97,7 +103,7 @@ export default {
         <input class="bg-transparent border-0 form-control text-center w-25 m-auto" name="Pronounciation"
                :value="entry_data.Pronounciation"
                placeholder="-Add pronounciation-" />
-        <group_selector form_id="data-form" submit_name="Group" :groups="entry_data.Group"/>
+        <group_selector form_id="data-form" submit_name="Group" :groups="entry_data.Group" :all_groups="all_groups" />
         <input_list form_id="data-form" label="Definition" :items="entry_data.Definition"/>
         <input_list form_id="data-form" label="Usage" :items="entry_data.Usage"/>
         <button type="submit" class="d-none"></button>

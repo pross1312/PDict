@@ -1,6 +1,6 @@
 import {computed} from "vue";
 import navbar from "./nav.js";
-import search from "./search-page.js";
+import home from "./home.js";
 export default {
     provide() {
         return {
@@ -9,10 +9,10 @@ export default {
         }
     },
     components: {
-        navbar, search
+        navbar, home
     },
     template: `
 <navbar/>
-<search/>
+<home/>
 `
 }

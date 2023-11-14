@@ -189,6 +189,9 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             for k := range Group {
                 groups = append(groups, k)
             }
+            if len(groups) == 0 {
+                groups = append(groups, "Verb", "Noun", "Adjective")
+            }
             fmt.Println("[INFO]", groups);
             json_data, err := json.Marshal(struct{ Group []string }{ groups })
             if Check_err(err, false, "Can't parse json for `nextword` request") {
