@@ -147,6 +147,7 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
     index := rand.Intn(len(unused_words))
     key := unused_words[index]
     unused_words[index] = unused_words[len(unused_words)-1]
+    unused_words[len(unused_words)-1] = key
     unused_words = unused_words[:len(unused_words)-1]
     used_words = append(used_words, key)
     if entry, found := Dict[key]; found {
