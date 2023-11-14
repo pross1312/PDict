@@ -2,9 +2,10 @@ import {ref, computed} from "vue";
 import navbar from "./nav.js";
 import home from "./home.js";
 import list from "./list.js";
+import learn from "./learn.js";
 export default {
     data() {
-        let current_content = ref("home");
+        let current_content = ref("learn");
         let current_key = ref("");
         history.pushState({page: 'home'}, 'PDict', '/');
         window.onpopstate = function(event) {
@@ -18,8 +19,9 @@ export default {
             current_key,
         };
     },
-provide() {
+    provide() {
         return {
+            search_key: computed(() => this.current_key),
             change_content: (content) => {
                 history.pushState({content, current_key: this.current_key}, 'PDict', '/');
                 this.current_content = content;
@@ -28,10 +30,10 @@ provide() {
         }
     },
     components: {
-        navbar, home, list
+        navbar, home, list, learn
     },
     template: `
 <navbar/>
-<component :is="current_content" :search_key="current_key"></component>
+<component :is="current_content"></component>
 `
 }
