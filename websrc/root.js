@@ -1,6 +1,7 @@
 import {ref, computed} from "vue";
 import navbar from "./nav.js";
 import home from "./home.js";
+import list from "./list.js";
 export default {
     data() {
         let current_content = ref("home");
@@ -27,10 +28,10 @@ provide() {
         }
     },
     components: {
-        navbar, home
+        navbar, home, list
     },
     template: `
 <navbar/>
-<home/>
+<component :is="current_content" :search_key="current_key"></component>
 `
 }
