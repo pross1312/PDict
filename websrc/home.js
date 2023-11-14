@@ -2,8 +2,9 @@ import input_list from "./input-list.js";
 import group_selector from "./group-selector.js";
 import {inject, computed, ref} from "vue";
 export default {
-    setup() {
-        const open_url = inject("open_url", (url) => {alert(`Can't open ${url}`)});
+    props: ["search_key"],
+    setup(props) {
+        const change_content = inject("change_content", (url) => {alert(`Can't open ${url}`)});
         let has_data = ref(false);
         const new_entry = function() {
             this.Keyword = '';
@@ -13,13 +14,22 @@ export default {
             this.Group = [];
         };
         let all_groups = ref([]);
-        fetch("http://localhost:9999/list-group").then(async result => {
-            if (result.headers.get("Content-Type").match("application/json") != null) {
-                all_groups.value = (await result.json()).Group;
-            }
-        }).catch(err => {alert(err);});
+        const update_group = function() {
+            fetch("http://localhost:9999/list-group").then(async result => {
+                if (result.headers.get("Content-Type").match("application/json") != null) {
+                    all_groups.value = (await result.json()).Group;
+                }
+            }).catch(err => {alert(err);});
+        }
+        update_group();
         let entry_data = ref(new new_entry());
-        return {open_url, entry_data, has_data, new_entry, all_groups};
+        let search_key = props.search_key;
+        return {change_content, entry_data, has_data, new_entry, all_groups, update_group, search_key};
+    },
+    mounted() {
+        if (this.search_key != null && this.search_key.trim() != "") {
+            this.search(this.search_key);
+        }
     },
     components: {
         input_list, group_selector
@@ -32,40 +42,32 @@ export default {
     methods: {
         update_data(event) {
             const update_url = "http://localhost:9999/update"
-            const form_data = new FormData(event.currentTarget);
-            let data = new this.new_entry();
-            try {
-                form_data.forEach((v ,k) => {
-                    if (k.endsWith("[]")) {
-                        data[k.slice(0, k.length-2)].push(v);
-                    } else data[k] = v;
-                });
-                if (data.Definition.length > 0) {
-                    data.Definition = data.Definition.map(x => x.split(",").map(y => y.trim()));
-                }
-                fetch(update_url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", },
-                    body: JSON.stringify(data),
-                }).then(result => {
-                    console.log(result.statusText);
-                }).catch(err => {alert(err)});
-            } catch (err) {
-                alert("Invalid data");
-                console.log(data, err);
-                form_data.forEach((k ,v) => {
-                    console.log(k, v);
-                });
+            if (this.entry_data.Keyword.trim() == "") return;
+            let entry = {...this.entry_data};
+            if (entry.Definition.length > 0) {
+                entry.Definition = entry.Definition.map(x => x.split(",").map(y => y.trim()));
             }
+            fetch(update_url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", },
+                body: JSON.stringify(entry),
+            }).then(result => {
+                console.log(result.statusText);
+                this.update_group();
+            }).catch(err => {alert(err)});
             event.preventDefault();
             return false;
         },
-        search(event) {
+        search_submit(event) {
+            this.search((new FormData(event.currentTarget)).get("key"));
+            event.preventDefault();
+            return false;
+        },
+        search(key) {
             this.has_data = false;
             this.entry_data = new this.new_entry();
             const search_url = "http://localhost:9999/query?key="
-            const form_data = new FormData(event.currentTarget);
-            const key = form_data.get("key").trim();
+            key = key.trim();
             if (key !== "") {
                 fetch(search_url + key).then(result => {
                     if (result.status == 404) {
@@ -80,14 +82,12 @@ export default {
                     }
                 }).catch(err => {alert(err)});
             }
-            event.preventDefault();
-            return false;
         },
     },
     template: `
 <div class="container-lg mt-5">
     <form action="#" method="GET" class="d-flex" role="search"
-          @submit="search($event)"
+          @submit="search_submit($event)"
           target="discard-frame" id="search-form">
         <input class="form-control form-control-lg me-2" type="search" name="key" placeholder="Search" aria-label="Search">
         <button class="btn btn-light" id="search-submit" type="submit" form="search-form">Search</button>

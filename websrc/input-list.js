@@ -1,8 +1,11 @@
 export default {
     props: ["label", "items", "form_id"],
     methods: {
-        remove_item(event) {
+        remove_item(item, event) {
             event.currentTarget.parentNode.parentNode.remove();
+            let index = this.items.indexOf(item);
+            if (index != -1) this.items.splice(index, 1);
+            else alert(`Can't remove ${item} in ${this.label}`);
             document.getElementById(this.form_id).dispatchEvent(new Event('submit'));
         }
     },
@@ -13,7 +16,7 @@ export default {
         <li v-for="item in items"
             class="d-flex">
             <span class="d-inline-flex flex-column justify-content-center">
-                <button class="btn-close d-inline" @mousedown.left="remove_item($event)"></button>
+                <button class="btn-close d-inline" @mousedown.left="remove_item(item, $event)"></button>
             </span>
             <input class="text-start fs-3 text-light fw-bold list-input-item btn bg-none py-0 my-0 mb-1"
                    :name="label + '[]'" :value="item" readonly />
