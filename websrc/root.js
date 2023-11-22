@@ -5,7 +5,7 @@ import list from "./list.js";
 import learn from "./learn.js";
 export default {
     data() {
-        let current_content = ref("learn");
+        let current_content = ref("home");
         let current_key = ref("");
         history.pushState({page: 'home'}, 'PDict', '/');
         window.onpopstate = function(event) {

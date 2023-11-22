@@ -96,8 +96,17 @@ func process_query(wt http.ResponseWriter, req *http.Request) {
 }
 
 func process_list(wt http.ResponseWriter, req *http.Request) {
-    list := make([]string, 0, len(Dict))
-    for k, _ := range Dict { list = append(list, k) }
+    var list []string
+    group := req.URL.Query().Get("group")
+    fmt.Println(group)
+    if req.URL.Query().Has("group") && group != "" {
+        list = make([]string, 0, len(Group[group]))
+        for _, v := range Group[group] { list = append(list, v) }
+    } else {
+        list = make([]string, 0, len(Dict))
+        for k, _ := range Dict { list = append(list, k) }
+    }
+    fmt.Println(list)
     json_data, err := json.Marshal(list)
     if Check_err(err, false, "Can't parse json for `list` request") {
         wt.WriteHeader(http.StatusInternalServerError)
@@ -214,7 +223,15 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             wt.WriteHeader(http.StatusInternalServerError)
             wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't read body", err.Error())))
         } else {
+            var prev_group = Dict[entry.Keyword].Group
             Dict[entry.Keyword] = entry;
+            for _, g := range prev_group {
+                if slices.Index(entry.Group, g) == -1 {
+                    Group[g] = slices.DeleteFunc(Group[g], func(x string)bool{
+                        return entry.Keyword == x
+                    });
+                }
+            }
             for _, g := range entry.Group {
                 if slices.Index(Group[g], entry.Keyword) == -1 {
                     Group[g] = append(Group[g], entry.Keyword)
