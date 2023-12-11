@@ -98,7 +98,6 @@ func process_query(wt http.ResponseWriter, req *http.Request) {
 func process_list(wt http.ResponseWriter, req *http.Request) {
     var list []string
     group := req.URL.Query().Get("group")
-    fmt.Println(group)
     if req.URL.Query().Has("group") && group != "" {
         list = make([]string, 0, len(Group[group]))
         for _, v := range Group[group] { list = append(list, v) }
@@ -106,7 +105,6 @@ func process_list(wt http.ResponseWriter, req *http.Request) {
         list = make([]string, 0, len(Dict))
         for k, _ := range Dict { list = append(list, k) }
     }
-    fmt.Println(list)
     json_data, err := json.Marshal(list)
     if Check_err(err, false, "Can't parse json for `list` request") {
         wt.WriteHeader(http.StatusInternalServerError)
@@ -193,6 +191,16 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             process_list(wt, req)
         } else if (req.URL.Path == "/nextword") {
             process_nextword(wt, req)
+        } else if (req.URL.Path == "/change-learn-group") {
+            group := req.URL.Query().Get("group")
+            used_words = used_words[:0]
+            unused_words = unused_words[:0]
+            for k, v := range(Dict) {
+                if group == "" || slices.Contains(v.Group, group) {
+                    unused_words = append(unused_words, k)
+                }
+            }
+            fmt.Fprintf(wt, "[INFO] Change group to %s\n", group)
         } else if (req.URL.Path == "/list-group") {
             // TODO: check for data race
             groups := make([]string, 0, len(Group))

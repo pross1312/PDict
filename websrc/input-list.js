@@ -13,7 +13,7 @@ export default {
             node.removeAttribute("readonly");
         },
         remove_item(item, event) {
-            event.currentTarget.parentNode.parentNode.remove();
+            event.currentTarget.parentNode.remove();
             let index = this.items.indexOf(item);
             if (index != -1) this.items.splice(index, 1);
             else alert(`Can't remove ${item} in ${this.label}`);
@@ -29,7 +29,7 @@ export default {
             <span class="d-inline-flex flex-column justify-content-center">
                 <button class="btn-close d-inline" @mousedown.left="remove_item(item, $event)"></button>
             </span>
-            <input class="text-start fs-3 text-light fw-bold list-input-item btn bg-none py-0 my-0 mb-1"
+            <input class="text-start fs-3 text-light fw-bold list-input-item btn bg-none py-0 my-0 mb-1 flex-grow-1"
                    @click="start_edit_item($event.currentTarget)"
                    @keydown.enter="change_item(index, $event.currentTarget)"
                    @change="change_item(index, $event.currentTarget)"
