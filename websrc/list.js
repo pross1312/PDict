@@ -49,10 +49,11 @@ export default {
         },
     },
     template: `
-<div v-if="has_data" class="container-fluid fs-4 mt-3 px-3">
+<div v-if="has_data" class="container-fluid fs-6 mt-3 px-3">
     Group:&nbsp
-    <div class="btn-group btn-group-sm border-1 border rounded-2">
-        <button type="button" class="btn fs-4 dropdown-toggle dropdown-toggle-split"
+    <div class="btn-group btn-group-sm border-0 border rounded-2">
+        <button type="button" class="btn fs-4 pt-0 pb-0 p-0 border-0 dropdown-toggle dropdown-toggle-split"
+                style="width: fit-content; height: fit-content;"
                 data-bs-toggle="dropdown">
             {{current_group}}
         </button>
@@ -61,12 +62,12 @@ export default {
             <li v-for="group in all_groups">
                 <p style="cursor: pointer;"
                    @mousedown.left="select_group($event.currentTarget.innerText)"
-                   class="dropdown-item m-0">{{group}}</p>
+                   class="dropdown-item m-0 fs-6 pt-0 pb-0">{{group}}</p>
             </li>
             <li>
-                <p style="cursor: pointer;"
+                <p style="cursor: pointer; color: yellow"
                    @mousedown.left="select_group('')"
-                   class="dropdown-item m-0">-ALL-</p>
+                   class="dropdown-item m-0 fs-6 pt-0 pb-0">-ALL-</p>
             </li>
         </ul>
     </div>
@@ -78,7 +79,7 @@ export default {
                     <button class="btn-close d-inline"
                             @mousedown.left="remove_key(keywords[row*per_row  + Number(col)])"></button>
                 </span>
-                <button class="h-100 w-100 btn btn-lg btn-secondary rounded-0 "
+                <button class="h-100 w-100 pt-1 pb-1 btn btn-sm btn-secondary rounded-0"
                         @mousedown.left="set_key(keywords[row*per_row + Number(col)]); change_content('home')">
                     {{keywords[row*per_row + Number(col)]}}
                 </button>

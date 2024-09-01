@@ -1,5 +1,5 @@
 export default {
-    props: ["label", "items", "form_id"],
+    props: ["label", "items", "form_id", "allow_edit"],
     methods: {
         change_item(index, node) {
             node.classList.add("btn");
@@ -8,9 +8,11 @@ export default {
             this.items[index] = node.value.trim();
         },
         start_edit_item(node) {
-            node.classList.remove("btn");
-            node.classList.add("form-control");
-            node.removeAttribute("readonly");
+            if (allow_edit) {
+                node.classList.remove("btn");
+                node.classList.add("form-control");
+                node.removeAttribute("readonly");
+            }
         },
         remove_item(item, event) {
             event.currentTarget.parentNode.remove();
@@ -21,21 +23,22 @@ export default {
         }
     },
     template: `
-<label class="d-block h5 fw-bold">{{label}}</label>
-<div class="mt-2 mb-4">
-    <ul class="list-item">
+<label class="mb-1 d-block h5 fw-bold mb-0">{{label}}</label>
+<div class="mt-0 mb-4">
+    <ul class="list-item" style="line-height: 1">
         <li v-for="(item, index) in items"
             class="d-flex">
-            <span class="d-inline-flex flex-column justify-content-center">
-                <button class="btn-close d-inline" @mousedown.left="remove_item(item, $event)"></button>
+            <span v-if="!allow_edit" class="bg-secondary m-auto" style="height: 15px; width: 15px; border-radius: 50%; display: inline-block;"/>
+            <span v-if="allow_edit" class="d-inline-flex flex-column justify-content-center" style="width: fit-content">
+                <button class="btn-close d-inline" style="scale: 0.7" @mousedown.left="remove_item(item, $event)"></button>
             </span>
-            <input class="text-start fs-3 text-light fw-bold list-input-item btn bg-none py-0 my-0 mb-1 flex-grow-1"
+            <input v-bind:style="allow_edit ? '' : 'pointer-events: none'"  class="ps-2 text-start fs-6 text-light fw-bold list-input-item btn bg-none py-0 my-0 mb-1 flex-grow-1"
                    @click="start_edit_item($event.currentTarget)"
                    @keydown.enter="change_item(index, $event.currentTarget)"
                    @change="change_item(index, $event.currentTarget)"
                    :name="label + '[]'" :value="item" readonly />
         </li>
-        <input :id="'new-' + label" class="form-control" :placeholder="'Add ' + label"
+        <input v-if="allow_edit" :id="'new-' + label" class="form-control form-control-sm" :placeholder="'Add ' + label"
                @change="items.push($event.currentTarget.value.trim()); $event.currentTarget.value = '';" />
     </ul>
 </div>

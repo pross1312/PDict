@@ -49,14 +49,14 @@ export default {
         },
     },
     template: `
-<div class="container-lg mt-5">
+<div class="container-lg mt-2">
     <form action="#" method="GET" class="d-flex" role="search"
           @submit="search_submit($event)"
           target="discard-frame" id="search-form">
-        <input class="form-control form-control-lg me-2" type="search" name="key" placeholder="Search" aria-label="Search">
+        <input class="form-control form-control-md me-2" type="search" name="key" placeholder="Search" aria-label="Search">
         <button class="btn btn-light" id="search-submit" type="submit" form="search-form">Search</button>
     </form>
-    <entry :entry_data="entry_data" :has_data="has_data"/>
+    <entry :entry_data="entry_data" :has_data="has_data" :show_usage="true" :allow_edit="true"/>
 </div>
 `
 }

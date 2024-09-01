@@ -1,6 +1,6 @@
 import {reactive} from "vue";
 export default {
-    props: ["submit_name", "groups", "form_id", "all_groups"],
+    props: ["submit_name", "groups", "form_id", "all_groups", "allow_edit"],
     data() {
         return {
             on_selecting: false, // because mousedown is fired first ??? important for this hack to work until i find a better way
@@ -51,19 +51,20 @@ export default {
 `
     },
     template: `
-<span class="btn-group d-flex-block flex-wrap mb-3">
+<span class="btn-group d-flex justify-content-start" style="scale: 0.7; transform-origin: left">
     <input v-for="group in groups" type="text" :size="Number((group.length * 1.1) >> 0)"
+           v-bind:style="allow_edit ? '' : 'pointer-events: none'"
            class="border fs-6 border-2 rounded-0 flex-grow-0 btn-sm btn btn-secondary px-1"
            @dblclick="remove_group(group, $event.currentTarget)"
            :name="submit_name + '[]'" :value="group" readonly/>
-    <div class="d-flex ms-1">
+    <div class="d-flex ms-1 flex-grow-0">
         <div class="w-75 btn-group btn-group-sm d-flex border-1 border rounded-2 d-none">
             <input id="new-group-input"
                    @blur="blur_input()"
                    @mousedown.left="on_selecting = true"
                    @change="add_group($event.currentTarget.value)"
                    type="text" class="form-control form-control-sm border-0"/>
-            <button type="button" class="btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" 
+            <button v-if="all_groups.filter(x => !groups.includes(x)).length > 0" type="button" class="btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" 
                     @mousedown.left="on_selecting = true"
                     @blur="blur_input()">
                 <span class="visually-hidden">Toggle Dropdown</span>
@@ -75,7 +76,7 @@ export default {
                 </li>
             </ul>
         </div>
-        <div class="d-flex flex-column justify-content-center">
+        <div v-if="allow_edit" class="d-flex flex-column justify-content-center">
             <button @click="toggle_new_group(true)" type="button" class="btn btn-sm btn-secondary">+</button>
         </div>
     </div>

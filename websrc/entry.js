@@ -2,7 +2,7 @@ import input_list from "./input-list.js";
 import group_selector from "./group-selector.js";
 import {ref} from "vue";
 export default {
-    props: ["entry_data", "has_data", "hide_keyword"],
+    props: ["entry_data", "has_data", "hide_keyword", "show_usage", "allow_edit"],
     setup() {
         let all_groups = ref([]);
         const update_group = function() {
@@ -39,23 +39,24 @@ export default {
         },
     },
     template: `
-<div class="container-lg mt-5" v-if="has_data">
+<div class="container-lg mt-2" v-if="has_data">
     <form action="/" class="" target="discard-frame"
           @submit="update_data($event)"
           id="data-form" method="GET">
-        <input class="form-control text-light fs-1 fw-bolder shadow-none text-center bg-transparent border-0"
+        <input class="form-control text-light fs-2 fw-bolder shadow-none text-center bg-transparent border-0 pb-0"
+               style="line-height: 1;"
                v-if="!hide_keyword"
                :value="entry_data.Keyword"
                name="Keyword" readonly />
-        <input class="bg-transparent border-0 form-control fs-4 text-center m-auto" name="Pronounciation"
-               style="width: 40%;"
+        <input class="bg-transparent border-0 form-control fs-6 text-center m-auto pt-0" name="Pronounciation"
+               style="width: 40%; line-height: 1; color: #aaaaaa;"
                @keydown.enter="$event.currentTarget.nextSibling.focus()"
                @change="entry_data.Pronounciation = $event.currentTarget.value"
                :value="entry_data.Pronounciation"
                placeholder="-Add pronounciation-" />
-        <group_selector form_id="data-form" submit_name="Group" :groups="entry_data.Group" :all_groups="all_groups" />
-        <input_list form_id="data-form" label="Definition" :items="entry_data.Definition"/>
-        <input_list form_id="data-form" label="Usage" :items="entry_data.Usage"/>
+        <group_selector form_id="data-form" submit_name="Group" :groups="entry_data.Group" :all_groups="all_groups" :allow_edit="allow_edit"/>
+        <input_list form_id="data-form" label="Definition" :items="entry_data.Definition" :allow_edit="allow_edit"/>
+        <input_list v-if="show_usage" form_id="data-form" label="Usage" :items="entry_data.Usage" :allow_edit="allow_edit"/>
         <button type="submit" class="d-none"></button>
     </form>
 </div>
