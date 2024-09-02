@@ -20,7 +20,7 @@ export default {
                 all_groups.value = (await result.json()).Group;
             }
         }).catch(err => alert(err));
-        return {has_data, keywords, per_row, all_groups};
+        return {has_data, keywords, per_row, all_groups, current_group};
     },
     methods: {
         remove_key(key) {
@@ -49,13 +49,13 @@ export default {
         },
     },
     template: `
-<div v-if="has_data" class="container-fluid fs-6 mt-3 px-3">
-    Group:&nbsp
-    <div class="btn-group btn-group-sm border-0 border rounded-2">
-        <button type="button" class="btn fs-4 pt-0 pb-0 p-0 border-0 dropdown-toggle dropdown-toggle-split"
+<div v-if="has_data" class="container-fluid mt-2">
+    <span>Group:</span>
+    <div v-bind:class="current_group.trim() === '' ? '' : 'ms-2'"  class="btn-group btn-group-sm border-0 border rounded-2">
+        <span class="fs-6">{{current_group}}</span>
+        <button type="button" class="m-auto ms-2 btn fs-6 pt-0 pb-0 p-0 border-0 dropdown-toggle dropdown-toggle-split"
                 style="width: fit-content; height: fit-content;"
                 data-bs-toggle="dropdown">
-            {{current_group}}
         </button>
         <span class="visually-hidden">Toggle Dropdown</span>
         <ul class="dropdown-menu">

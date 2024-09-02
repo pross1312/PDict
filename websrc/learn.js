@@ -64,28 +64,34 @@ export default {
         }
     },
     template: `
-<div class="btn-group btn-group-sm border-1 border rounded-2">
-    <button type="button" class="btn fs-4 dropdown-toggle dropdown-toggle-split"
-            data-bs-toggle="dropdown">
-        {{current_group}}
-    </button>
-    <span class="visually-hidden">Toggle Dropdown</span>
-    <ul class="dropdown-menu">
-        <li v-for="group in all_groups">
-            <p style="cursor: pointer;"
-               @mousedown.left="select_group($event.currentTarget.innerText)"
-               class="dropdown-item m-0">{{group}}</p>
-        </li>
-        <li>
-            <p style="cursor: pointer;"
-               @mousedown.left="select_group('')"
-               class="dropdown-item m-0">-ALL-</p>
-        </li>
-    </ul>
-</div>
+<div class="container-fluid mt-2">
+<span class="d-block" style="height: fit-content">
+    <span class="fs-6 m-auto h-100 d-inline-block">Group:</span>
+    <div v-bind:class="current_group.trim() === '' ? '' : 'ms-2'" class="btn-group btn-group-sm border-0 border rounded-2">
+        <span class="fs-6">{{current_group}}</span>
+        <button type="button" class="m-auto ms-2 btn fs-6 pt-0 pb-0 p-0 border-0 dropdown-toggle dropdown-toggle-split"
+                style="width: fit-content; height: fit-content;"
+                data-bs-toggle="dropdown">
+        </button>
+        <span class="visually-hidden">Toggle Dropdown</span>
+        <ul class="dropdown-menu">
+            <li v-for="group in all_groups">
+                <p style="cursor: pointer;"
+                   @mousedown.left="select_group($event.currentTarget.innerText)"
+                   class="dropdown-item m-0 fs-6 pt-0 pb-0">{{group}}</p>
+            </li>
+            <li>
+                <p style="cursor: pointer; color: yellow"
+                   @mousedown.left="select_group('')"
+                   class="dropdown-item m-0 fs-6 pt-0 pb-0">-ALL-</p>
+            </li>
+        </ul>
+    </div>
+</span>
 <entry v-if="entry != null" :entry_data="entry"
        :has_data="true" :allow_edit="false"
        :hide_keyword="!show_answer" :hide_usage="!show_answer" :hide_pronounciation="!show_answer"
        @keydown.space="$event.stopPropagation();"/>
+</div>
 `
 }
