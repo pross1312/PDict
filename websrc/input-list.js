@@ -4,14 +4,12 @@ export default {
         change_item(index, node) {
             node.classList.add("btn");
             node.classList.remove("form-control");
-            node.setAttribute("readonly", "readonly");
             this.items[index] = node.value.trim();
         },
         start_edit_item(node) {
             if (allow_edit) {
                 node.classList.remove("btn");
                 node.classList.add("form-control");
-                node.removeAttribute("readonly");
             }
         },
         remove_item(item, event) {

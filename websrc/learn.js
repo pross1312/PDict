@@ -53,7 +53,7 @@ export default {
             fetch(server_nextword_addr).then(async result => {
                 if (result.headers.get("Content-Type").includes("application/json")) {
                     let data = await result.json();
-                    data.Definition = data.Definition.map(x => x.join(", "));
+                    data.Definition = data.Definition;
                     this.entry = data;
                     this.keyword = data.Keyword;
                 } else {

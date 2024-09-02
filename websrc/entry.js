@@ -50,7 +50,7 @@ export default {
             if (this.entry_data.Keyword.trim() == "") return;
             let entry = {...this.entry_data};
             if (entry.Definition.length > 0) {
-                entry.Definition = entry.Definition.map(x => x.split(",").map(y => y.trim()));
+                entry.Definition = entry.Definition.map(x => x.trim());
             }
             fetch(update_url, {
                 method: "POST",

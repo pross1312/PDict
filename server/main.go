@@ -16,7 +16,7 @@ import (
 type Entry struct {
     Keyword string
     Pronounciation string
-    Definition [][]string
+    Definition []string
     Usage []string
     Group []string
 }
@@ -204,8 +204,11 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
         } else if (req.URL.Path == "/list-group") {
             // TODO: check for data race
             groups := make([]string, 0, len(Group))
-            for k := range Group {
-                groups = append(groups, k)
+            for group_name, key_words := range Group {
+				if len(key_words) == 0 && group_name != "Noun" && group_name != "Adjective" && group_name != "Verb" {
+					panic(group_name);
+				}
+				groups = append(groups, group_name)
             }
             if len(groups) == 0 {
                 groups = append(groups, "Verb", "Noun", "Adjective")

@@ -40,7 +40,7 @@ export default {
                     } else if (result.headers.get("Content-Type").match("application/json") != null) {
                         result.json().then(data => {
                             this.entry_data = data;
-                            this.entry_data.Definition = data.Definition.map(x => x.join(", "));
+                            this.entry_data.Definition = data.Definition;
                             this.has_data = true;
                         });
                     }
