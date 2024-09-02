@@ -14,12 +14,12 @@ export default {
             if (!this.on_selecting) this.toggle_new_group(false);
             this.on_selecting = false;
         },
-        remove_group(group_name, group) {
-            group.remove();
+        remove_group(group_name, e) {
             let index = this.groups.indexOf(group_name);
             if (index != -1) this.groups.splice(index, 1);
-            else alert(`Can't remove ${grou_name}`);
+            else alert(`Can't remove ${group_name}`);
             document.getElementById(this.form_id).dispatchEvent(new Event('submit'));
+            return true;
         },
         calc_size(val) {
             return (val.length * 1.3)>>0;
@@ -55,7 +55,7 @@ export default {
     <input v-for="group in groups" type="text" :size="Number((group.length * 1.1) >> 0)"
            v-bind:style="allow_edit ? '' : 'pointer-events: none'"
            class="border fs-6 border-2 rounded-0 flex-grow-0 btn-sm btn btn-secondary px-1"
-           @dblclick="remove_group(group, $event.currentTarget)"
+           @dblclick="remove_group(group, $event)"
            :name="submit_name + '[]'" :value="group" readonly/>
     <div class="d-flex ms-1 flex-grow-0">
         <div class="w-75 btn-group btn-group-sm d-flex border-1 border rounded-2 d-none">

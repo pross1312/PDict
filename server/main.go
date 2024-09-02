@@ -205,10 +205,9 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             // TODO: check for data race
             groups := make([]string, 0, len(Group))
             for group_name, key_words := range Group {
-				if len(key_words) == 0 && group_name != "Noun" && group_name != "Adjective" && group_name != "Verb" {
-					panic(group_name);
+				if !(len(key_words) == 0 && group_name != "Noun" && group_name != "Adjective" && group_name != "Verb") {
+					groups = append(groups, group_name)
 				}
-				groups = append(groups, group_name)
             }
             if len(groups) == 0 {
                 groups = append(groups, "Verb", "Noun", "Adjective")
