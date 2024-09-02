@@ -19,13 +19,26 @@ export default {
             current_key,
         };
     },
+    mounted() {
+        window.addEventListener('keydown', (e) => {
+            if (e.srcElement.tagName.toLowerCase() === 'body') {
+                if (e.key === '1') this.change_content('home');
+                else if (e.key === '2') this.change_content('list');
+                else if (e.key === '3') this.change_content('learn');
+                return true;
+            }
+        });
+    },
     provide() {
-        return {
-            search_key: computed(() => this.current_key),
-            change_content: (content) => {
+        this.change_content = (content) => {
+            if (content !== this.current_content) {
                 history.pushState({content, current_key: this.current_key}, 'PDict', '/');
                 this.current_content = content;
-            },
+            }
+        }
+        return {
+            search_key: computed(() => this.current_key),
+            change_content: this.change_content,
             set_key: computed(() => (k) => {this.current_key = k;}),
         }
     },
