@@ -15,7 +15,6 @@ export default {
         return {
             entry: new entry.new_entry(),
             show_answer: false,
-            show_usage: false,
             keyword: "",
         }
     },
@@ -27,7 +26,6 @@ export default {
             if (e.key === " ") {
                 if (this.show_answer) this.next_word();
                 this.show_answer = !this.show_answer;
-                this.show_usage = !this.show_usage;
             }
         };
         fetch(`http://localhost:9999/change-learn-group?group=${this.current_group}`).then(async result => {
@@ -85,10 +83,9 @@ export default {
         </li>
     </ul>
 </div>
-<span class="mt-2 d-flex justify-content-center h1 display-3 text-center" style="height: 1em">
-    <span v-if="show_answer">{{keyword}}</span>
-</span>
 <entry v-if="entry != null" :entry_data="entry"
-       :has_data="true" :hide_keyword="true" :show_usage="show_usage" @keydown.space="$event.stopPropagation();"/>
+       :has_data="true" :allow_edit="false"
+       :hide_keyword="!show_answer" :hide_usage="!show_answer" :hide_pronounciation="!show_answer"
+       @keydown.space="$event.stopPropagation();"/>
 `
 }

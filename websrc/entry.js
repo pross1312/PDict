@@ -2,7 +2,33 @@ import input_list from "./input-list.js";
 import group_selector from "./group-selector.js";
 import {ref} from "vue";
 export default {
-    props: ["entry_data", "has_data", "hide_keyword", "show_usage", "allow_edit"],
+    props: {
+        entry_data: {
+            type: Object,
+            required: true,
+        },
+        hide_keyword: {
+            type: Boolean,
+            default: false,
+        },
+        hide_pronounciation: {
+            type: Boolean,
+            default: false,
+        },
+        hide_usage: {
+            type: Boolean,
+            default: false,
+        },
+        allow_edit: {
+            type: Boolean,
+            default: true
+        },
+        has_data: {
+            type: Boolean,
+            default: false,
+            required: true
+        },
+    },
     setup() {
         let all_groups = ref([]);
         const update_group = function() {
@@ -43,12 +69,13 @@ export default {
     <form action="/" class="" target="discard-frame"
           @submit="update_data($event)"
           id="data-form" method="GET">
-        <input class="form-control text-light fs-2 fw-bolder shadow-none text-center bg-transparent border-0 pb-0"
+        <input v-bind:style="hide_keyword ? 'visibility: hidden' : ''"
                style="line-height: 1;"
-               v-if="!hide_keyword"
+               class="form-control text-light fs-2 shadow-none text-center bg-transparent border-0 pb-0"
                :value="entry_data.Keyword"
                name="Keyword" readonly />
-        <input class="bg-transparent border-0 form-control fs-6 text-center m-auto pt-0" name="Pronounciation"
+        <input v-bind:style="hide_pronounciation ? 'visibility: hidden' : ''"
+               class="bg-transparent border-0 form-control fs-6 text-center m-auto pt-0 mt-1" name="Pronounciation"
                style="width: 40%; line-height: 1; color: #aaaaaa;"
                @keydown.enter="$event.currentTarget.nextSibling.focus()"
                @change="entry_data.Pronounciation = $event.currentTarget.value"
@@ -56,7 +83,10 @@ export default {
                placeholder="-Add pronounciation-" />
         <group_selector form_id="data-form" submit_name="Group" :groups="entry_data.Group" :all_groups="all_groups" :allow_edit="allow_edit"/>
         <input_list form_id="data-form" label="Definition" :items="entry_data.Definition" :allow_edit="allow_edit"/>
-        <input_list v-if="show_usage" form_id="data-form" label="Usage" :items="entry_data.Usage" :allow_edit="allow_edit"/>
+        <span v-bind:style="hide_pronounciation ? 'visibility: hidden' : ''">
+            <input_list form_id="data-form" label="Usage" :items="entry_data.Usage"
+                        :allow_edit="allow_edit"/>
+        </span>
         <button type="submit" class="d-none"></button>
     </form>
 </div>

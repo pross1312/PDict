@@ -56,7 +56,7 @@ export default {
         <input class="form-control form-control-md me-2" type="search" name="key" placeholder="Search" aria-label="Search">
         <button class="btn btn-light" id="search-submit" type="submit" form="search-form">Search</button>
     </form>
-    <entry :entry_data="entry_data" :has_data="has_data" :show_usage="true" :allow_edit="true"/>
+    <entry :entry_data="entry_data" :has_data="has_data"/>
 </div>
 `
 }

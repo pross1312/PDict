@@ -32,11 +32,12 @@ export default {
             <span v-if="allow_edit" class="d-inline-flex flex-column justify-content-center" style="width: fit-content">
                 <button class="btn-close d-inline" style="scale: 0.7" @mousedown.left="remove_item(item, $event)"></button>
             </span>
-            <input v-bind:style="allow_edit ? '' : 'pointer-events: none'"  class="ps-2 text-start fs-6 text-light fw-bold list-input-item btn bg-none py-0 my-0 mb-1 flex-grow-1"
+            <input :readonly="!allow_edit"
+                   class="ps-2 text-start fs-6 text-light list-input-item btn bg-none py-0 my-0 mb-1 flex-grow-1"
                    @click="start_edit_item($event.currentTarget)"
                    @keydown.enter="change_item(index, $event.currentTarget)"
                    @change="change_item(index, $event.currentTarget)"
-                   :name="label + '[]'" :value="item" readonly />
+                   :name="label + '[]'" :value="item" />
         </li>
         <input v-if="allow_edit" :id="'new-' + label" class="form-control form-control-sm" :placeholder="'Add ' + label"
                @change="items.push($event.currentTarget.value.trim()); $event.currentTarget.value = '';" />
