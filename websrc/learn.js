@@ -74,16 +74,16 @@ export default {
                 data-bs-toggle="dropdown">
         </button>
         <span class="visually-hidden">Toggle Dropdown</span>
-        <ul class="dropdown-menu">
-            <li v-for="group in all_groups">
-                <p style="cursor: pointer;"
-                   @mousedown.left="select_group($event.currentTarget.innerText)"
-                   class="dropdown-item m-0 fs-6 pt-0 pb-0">{{group}}</p>
-            </li>
+        <ul class="dropdown-menu overflow-auto" style="height: 300px">
             <li>
                 <p style="cursor: pointer; color: yellow"
                    @mousedown.left="select_group('')"
                    class="dropdown-item m-0 fs-6 pt-0 pb-0">-ALL-</p>
+            </li>
+            <li v-for="group in all_groups">
+                <p style="cursor: pointer;"
+                   @mousedown.left="select_group($event.currentTarget.innerText)"
+                   class="dropdown-item m-0 fs-6 pt-0 pb-0">{{group}}</p>
             </li>
         </ul>
     </div>

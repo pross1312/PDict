@@ -65,7 +65,7 @@ export default {
         },
     },
     template: `
-<div class="container-lg mt-2" v-if="has_data">
+<div class="container-fluid mt-2" v-if="has_data">
     <form action="/" class="" target="discard-frame"
           @submit="update_data($event)"
           id="data-form" method="GET">

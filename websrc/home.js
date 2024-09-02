@@ -49,8 +49,8 @@ export default {
         },
     },
     template: `
-<div class="container-lg mt-2">
-    <form action="#" method="GET" class="d-flex" role="search"
+<div class="container-fluid mt-2">
+    <form action="#" method="GET" class="ms-4 me-4 d-flex" role="search"
           @submit="search_submit($event)"
           target="discard-frame" id="search-form">
         <input class="form-control form-control-md me-2" type="search" name="key" placeholder="Search" aria-label="Search">

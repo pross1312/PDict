@@ -49,7 +49,8 @@ export default {
         },
     },
     template: `
-<div v-if="has_data" class="container-fluid mt-2">
+<div v-if="has_data" class="m-0 p-0 border-0" style="height: 100%; width: 100%; overflow-y: hidden !important">
+<div class="position-absolute z-1 ps-1 pe-1">
     <span>Group:</span>
     <div v-bind:class="current_group.trim() === '' ? '' : 'ms-2'"  class="btn-group btn-group-sm border-0 border rounded-2">
         <span class="fs-6">{{current_group}}</span>
@@ -58,19 +59,21 @@ export default {
                 data-bs-toggle="dropdown">
         </button>
         <span class="visually-hidden">Toggle Dropdown</span>
-        <ul class="dropdown-menu">
-            <li v-for="group in all_groups">
-                <p style="cursor: pointer;"
-                   @mousedown.left="select_group($event.currentTarget.innerText)"
-                   class="dropdown-item m-0 fs-6 pt-0 pb-0">{{group}}</p>
-            </li>
+        <ul class="dropdown-menu overflow-auto" style="height: 300px">
             <li>
                 <p style="cursor: pointer; color: yellow"
                    @mousedown.left="select_group('')"
                    class="dropdown-item m-0 fs-6 pt-0 pb-0">-ALL-</p>
             </li>
+            <li v-for="group in all_groups">
+                <p style="cursor: pointer;"
+                   @mousedown.left="select_group($event.currentTarget.innerText)"
+                   class="dropdown-item m-0 fs-6 pt-0 pb-0">{{group}}</p>
+            </li>
         </ul>
     </div>
+</div>
+<div class="container-fluid mt-4 pb-2" style="height: 100%; margin-top: 1em; overflow-x: hidden !important">
     <div v-for="(_, row) in Number((keywords.length/per_row) >> 0) + 1"
          class="row d-flex flex gx-5 mt-3">
         <div v-for="(_, col) in per_row" :class="['col-' + ((12/per_row)>>0)]">
@@ -86,6 +89,7 @@ export default {
             </span>
         </div>
     </div>
+</div>
 </div>
 `
 }
