@@ -73,6 +73,7 @@ export default {
                style="line-height: 1;"
                class="form-control text-light fs-2 shadow-none text-center bg-transparent border-0 pb-0"
                :value="entry_data.Keyword"
+               tabindex="-1"
                name="Keyword" readonly />
         <input v-bind:style="hide_pronounciation ? 'visibility: hidden' : ''"
                class="bg-transparent border-0 form-control fs-6 text-center m-auto pt-0 mt-1" name="Pronounciation"

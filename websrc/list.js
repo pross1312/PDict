@@ -73,7 +73,7 @@ export default {
         </ul>
     </div>
 </div>
-<div class="container-fluid mt-4 pb-2" style="height: 100%; margin-top: 1em; overflow-x: hidden !important">
+<div class="container-fluid" style="height: 100%; margin-top: 1em; padding-bottom: 3em; overflow-x: hidden !important">
     <div v-for="(_, row) in Number((keywords.length/per_row) >> 0) + 1"
          class="row d-flex flex gx-5 mt-3">
         <div v-for="(_, col) in per_row" :class="['col-' + ((12/per_row)>>0)]">
@@ -82,7 +82,7 @@ export default {
                     <button class="btn-close d-inline"
                             @mousedown.left="remove_key(keywords[row*per_row  + Number(col)])"></button>
                 </span>
-                <button class="h-100 w-100 pt-1 pb-1 btn btn-sm btn-secondary rounded-0"
+                <button class="pt-1 pb-1 btn btn-sm btn-secondary rounded-0 text-wrap" style="height: 100%; width: fit-content;"
                         @mousedown.left="set_key(keywords[row*per_row + Number(col)]); change_content('home')">
                     {{keywords[row*per_row + Number(col)]}}
                 </button>

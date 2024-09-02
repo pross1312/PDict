@@ -100,10 +100,10 @@ func process_list(wt http.ResponseWriter, req *http.Request) {
     group := req.URL.Query().Get("group")
     if req.URL.Query().Has("group") && group != "" {
         list = make([]string, 0, len(Group[group]))
-        for _, v := range Group[group] { list = append(list, v) }
+        for _, group := range Group[group] { list = append(list, group) }
     } else {
         list = make([]string, 0, len(Dict))
-        for k, _ := range Dict { list = append(list, k) }
+        for keyword, _ := range Dict { list = append(list, keyword) }
     }
     json_data, err := json.Marshal(list)
     if Check_err(err, false, "Can't parse json for `list` request") {
@@ -174,7 +174,7 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
     }
 }
 
-func remove_all_entry(words []string) {
+func remove_entries(words []string) {
     for _, word := range words { delete(Dict, word) }
 }
 
@@ -195,9 +195,9 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             group := req.URL.Query().Get("group")
             used_words = used_words[:0]
             unused_words = unused_words[:0]
-            for k, v := range(Dict) {
-                if group == "" || slices.Contains(v.Group, group) {
-                    unused_words = append(unused_words, k)
+            for keyword, entry := range(Dict) {
+                if group == "" || slices.Contains(entry.Group, group) {
+                    unused_words = append(unused_words, keyword)
                 }
             }
             fmt.Fprintf(wt, "[INFO] Change group to %s\n", group)
@@ -235,16 +235,16 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
         } else {
             var prev_group = Dict[entry.Keyword].Group
             Dict[entry.Keyword] = entry;
-            for _, g := range prev_group {
-                if slices.Index(entry.Group, g) == -1 {
-                    Group[g] = slices.DeleteFunc(Group[g], func(x string)bool{
+            for _, group := range prev_group {
+                if slices.Index(entry.Group, group) == -1 {
+                    Group[group] = slices.DeleteFunc(Group[group], func(x string)bool{
                         return entry.Keyword == x
                     });
                 }
             }
-            for _, g := range entry.Group {
-                if slices.Index(Group[g], entry.Keyword) == -1 {
-                    Group[g] = append(Group[g], entry.Keyword)
+            for _, group := range entry.Group {
+                if slices.Index(Group[group], entry.Keyword) == -1 {
+                    Group[group] = append(Group[group], entry.Keyword)
                 }
             }
             used_words = append(used_words, entry.Keyword)
@@ -260,7 +260,7 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             wt.WriteHeader(http.StatusInternalServerError)
             wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't read body", err.Error())))
         } else {
-            remove_all_entry(words)
+            remove_entries(words)
             fmt.Println("[INFO] Delete ", words)
             fmt.Fprint(wt, "[INFO] Successfully delete")
             save_dict(SERVER_DATA_FILE_PATH);
@@ -306,14 +306,14 @@ func main() {
     json.Unmarshal(dict_data, &Dict)
     used_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
     unused_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
-    for k, v := range Dict {
-        if v.Group == nil {
-            v.Group = make([]string, 0, INIT_ARRAY_BUFFER);
-            Dict[k] = v;
+    for keyword, entry := range Dict {
+        if entry.Group == nil {
+            entry.Group = make([]string, 0, INIT_ARRAY_BUFFER);
+            Dict[keyword] = entry;
         }
-        unused_words = append(unused_words, k)
-        for _, g := range v.Group {
-            Group[g] = append(Group[g], v.Keyword)
+        unused_words = append(unused_words, keyword)
+        for _, g := range entry.Group {
+            Group[g] = append(Group[g], entry.Keyword)
         }
     }
     fmt.Println(unused_words);

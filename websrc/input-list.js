@@ -28,7 +28,9 @@ export default {
             class="d-flex">
             <span v-if="!allow_edit" class="bg-secondary m-auto" style="height: 15px; width: 15px; border-radius: 50%; display: inline-block;"/>
             <span v-if="allow_edit" class="d-inline-flex flex-column justify-content-center" style="width: fit-content">
-                <button class="btn-close d-inline" style="scale: 0.7" @mousedown.left="remove_item(item, $event)"></button>
+                <button class="btn-close d-inline" style="scale: 0.7"
+                        tabindex="-1"
+                        @mousedown.left="remove_item(item, $event)"></button>
             </span>
             <input :readonly="!allow_edit"
                    class="ps-2 text-start fs-6 text-light list-input-item btn bg-none py-0 my-0 mb-1 flex-grow-1"
