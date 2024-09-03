@@ -112,7 +112,7 @@ func process_list(wt http.ResponseWriter, req *http.Request) {
         wt.WriteHeader(http.StatusInternalServerError)
         wt.Write([]byte(log_format(ERROR, err.Error())))
     } else {
-        fmt.Println("Sent " + string(json_data))
+        log(INFO, "Sent %d words", len(list))
         wt.Header().Set("Content-Type", "application/json")
         wt.WriteHeader(http.StatusOK)
         wt.Write(json_data)
@@ -210,7 +210,7 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
     wt.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
     switch req.Method {
     case "GET":
-        log(INFO, "Client request for %s",  req.URL.Path)
+		log(INFO, "Client request for '%s' with query: %s",  req.URL.EscapedPath(), req.URL.Query())
         if req.URL.Path == "/query" {
             process_query(wt, req)
         } else if (req.URL.Path == "/suggest") {
