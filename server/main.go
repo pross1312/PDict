@@ -30,7 +30,8 @@ const (
 )
 
 var (
-    SERVER_DATA_FILE_PATH = "dictionary_data"
+    SERVER_DATA_FILE_PATH = ".dictionary_data"
+	USED_WORDS_FILE_PATH = SERVER_DATA_FILE_PATH + ".used"
     Dict = make(Dictionary)
     Group = map[string][]string{
         "Verb": []string{},
@@ -42,8 +43,9 @@ var (
         ".css": "text/css",
         ".js": "text/javascript",
     }
-    used_words []string
-    unused_words []string
+    used_words []string = make([]string, 0, INIT_ARRAY_BUFFER)
+    unused_words []string = make([]string, 0, INIT_ARRAY_BUFFER)
+	current_learn_group = ""
 )
 
 func prettyPrint(i interface{}) string {
@@ -58,7 +60,7 @@ func dump_request(req *http.Request) {
 
 func process_suggest(wt http.ResponseWriter, req *http.Request) {
     key := req.URL.Query().Get("key")
-    fmt.Printf("[INFO] Client request for suggestion of `%s`\n", key)
+    log(INFO, "Client request for suggestion of `%s`",  key)
     result := make([]string, 0, INIT_ARRAY_BUFFER)
     for word, _ := range Dict {
         if strings.Contains(word, key) {
@@ -68,7 +70,7 @@ func process_suggest(wt http.ResponseWriter, req *http.Request) {
     json_data, err := json.Marshal(struct{ Suggestion []string }{ result })
     if Check_err(err, false, "Can't parse json for `suggest` request") {
         wt.WriteHeader(http.StatusInternalServerError)
-        wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't parse json", err.Error())))
+        wt.Write([]byte(log_format(ERROR, err.Error())))
     } else {
         wt.Header().Set("Content-Type", "application/json")
         wt.WriteHeader(http.StatusOK)
@@ -78,12 +80,12 @@ func process_suggest(wt http.ResponseWriter, req *http.Request) {
 
 func process_query(wt http.ResponseWriter, req *http.Request) {
     key := req.URL.Query().Get("key")
-    fmt.Printf("[INFO] Client request for key = `%s`\n", key)
+    log(INFO, "Client request for key = `%s`",  key)
     if entry, found := Dict[key]; found {
         json_data, err := json.Marshal(entry)
         if Check_err(err, false, "Can't parse json for `query` request") {
             wt.WriteHeader(http.StatusInternalServerError)
-            wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't parse json", err.Error())))
+            wt.Write([]byte(log_format(ERROR, err.Error())))
         } else {
             wt.Header().Set("Content-Type", "application/json")
             wt.WriteHeader(http.StatusOK)
@@ -91,7 +93,7 @@ func process_query(wt http.ResponseWriter, req *http.Request) {
         }
     } else {
         wt.WriteHeader(http.StatusNotFound)
-        wt.Write([]byte(fmt.Sprintf("No entry for %s", key)))
+        wt.Write([]byte(log_format(WARNING, "No entry for %s", key)))
     }
 }
 
@@ -108,7 +110,7 @@ func process_list(wt http.ResponseWriter, req *http.Request) {
     json_data, err := json.Marshal(list)
     if Check_err(err, false, "Can't parse json for `list` request") {
         wt.WriteHeader(http.StatusInternalServerError)
-        wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't parse json", err.Error())))
+        wt.Write([]byte(log_format(ERROR, err.Error())))
     } else {
         fmt.Println("Sent " + string(json_data))
         wt.Header().Set("Content-Type", "application/json")
@@ -129,7 +131,7 @@ func serve_file(wt http.ResponseWriter, req *http.Request) {
     data, err := os.ReadFile(file_path)
     if Check_err(err, false, "Can't read file " + file_path) {
         wt.WriteHeader(http.StatusNotFound)
-        wt.Write([]byte(fmt.Sprintf("Error: %s\nCan't serve file %s", err.Error(), file_path)))
+		wt.Write([]byte(log_format(ERROR, "Can't serve file %s, %s", file_path, err.Error())))
     } else {
         wt.Header().Set("Content-Type", content_types[filepath.Ext(file_path)])
         wt.Write(data)
@@ -143,32 +145,46 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
             fmt.Fprint(wt, "No words to learn")
             return
         }
-        temp := unused_words
-        unused_words = used_words
-        used_words = temp
-        fmt.Println("[INFO] Switch used and unused")
+		if current_learn_group != "" {
+			new_len := len(used_words)
+			var i int
+			for i = len(used_words)-1; i >= 0; i-- {
+				if slices.Contains(Dict[used_words[i]].Group, current_learn_group) {
+					new_len -= 1
+					used_words[i] = used_words[new_len]
+				}
+			}
+			used_words = used_words[:new_len]
+			unused_words = Group[current_learn_group]
+		} else {
+			temp := unused_words
+			unused_words = used_words
+			used_words = temp
+		}
+        log(INFO, "Switch used and unused")
     }
-    // TODO: Maybe some data race will happen here because i also change unused_words and used_words when add new entry
-    //       which probably run in different thread
-    // TODO: Maybe add a mutex
     index := rand.Intn(len(unused_words))
     key := unused_words[index]
-    unused_words[index] = unused_words[len(unused_words)-1]
-    unused_words[len(unused_words)-1] = key
-    unused_words = unused_words[:len(unused_words)-1]
-    used_words = append(used_words, key)
     if entry, found := Dict[key]; found {
         json_data, err := json.Marshal(entry)
         if Check_err(err, false, "Can't parse json for `nextword` request") {
             wt.WriteHeader(http.StatusInternalServerError)
-            wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't parse json", err.Error())))
+            wt.Write([]byte(log_format(ERROR, err.Error())))
         } else {
             wt.Header().Set("Content-Type", "application/json")
             wt.WriteHeader(http.StatusOK)
             wt.Write(json_data)
+			// TODO: Maybe some data race will happen here because i also change unused_words and used_words when add new entry
+			//       which probably run in different thread
+			// TODO: Maybe add a mutex
+			unused_words[index] = unused_words[len(unused_words)-1]
+			unused_words[len(unused_words)-1] = key
+			unused_words = unused_words[:len(unused_words)-1]
+			used_words = append(used_words, key)
+			save_used_words()
         }
     } else {
-        fmt.Println("[ERROR] Can't find", key, len(unused_words), len(Dict))
+        log(ERROR, "Can't find",  key, len(unused_words), len(Dict))
         wt.WriteHeader(http.StatusInternalServerError)
         fmt.Fprintf(wt, "[ERROR] Unused list probably is invalid '%s'", key)
     }
@@ -182,7 +198,7 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
     wt.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
     switch req.Method {
     case "GET":
-        fmt.Printf("[INFO] Client request for %s\n", req.URL.Path)
+        log(INFO, "Client request for %s",  req.URL.Path)
         if req.URL.Path == "/query" {
             process_query(wt, req)
         } else if (req.URL.Path == "/suggest") {
@@ -193,14 +209,14 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             process_nextword(wt, req)
         } else if (req.URL.Path == "/change-learn-group") {
             group := req.URL.Query().Get("group")
-            used_words = used_words[:0]
-            unused_words = unused_words[:0]
+			current_learn_group = group
+			unused_words = unused_words[:0]
             for keyword, entry := range(Dict) {
-                if group == "" || slices.Contains(entry.Group, group) {
+                if !slices.Contains(used_words, keyword) && (group == "" || slices.Contains(entry.Group, group)) {
                     unused_words = append(unused_words, keyword)
                 }
             }
-            fmt.Fprintf(wt, "[INFO] Change group to %s\n", group)
+            fmt.Fprintf(wt, log_format(INFO, "Change group to %s", group))
         } else if (req.URL.Path == "/list-group") {
             // TODO: check for data race
             groups := make([]string, 0, len(Group))
@@ -212,11 +228,11 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             if len(groups) == 0 {
                 groups = append(groups, "Verb", "Noun", "Adjective")
             }
-            fmt.Println("[INFO]", groups);
+			log(INFO, "All groups: %s", groups)
             json_data, err := json.Marshal(struct{ Group []string }{ groups })
             if Check_err(err, false, "Can't parse json for `nextword` request") {
                 wt.WriteHeader(http.StatusInternalServerError)
-                wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't parse json", err.Error())))
+                wt.Write([]byte(log_format(ERROR, err.Error())))
             } else {
                 wt.Header().Set("Content-Type", "application/json")
                 wt.WriteHeader(http.StatusOK)
@@ -231,7 +247,7 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
         if Check_err(err, false, "Can't read POST request body") {
             dump_request(req)
             wt.WriteHeader(http.StatusInternalServerError)
-            wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't read body", err.Error())))
+			wt.Write([]byte(log_format(ERROR, "Can't read body, %s", err.Error())))
         } else {
             var prev_group = Dict[entry.Keyword].Group
             Dict[entry.Keyword] = entry;
@@ -248,9 +264,9 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
                 }
             }
             used_words = append(used_words, entry.Keyword)
-            fmt.Printf("[INFO] Update %s\n", prettyPrint(entry))
-            fmt.Fprintf(wt, "[INFO] Successfully update %s\n", entry.Keyword)
-            save_dict(SERVER_DATA_FILE_PATH);
+            log(INFO, "Update %s",  prettyPrint(entry))
+            fmt.Fprintf(wt, log_format(INFO, "Successfully update %s", entry.Keyword))
+            save_dict();
         }
     case "DELETE":
         var words []string
@@ -258,12 +274,12 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
         if Check_err(err, false, "Can't read DELETE request body") {
             dump_request(req)
             wt.WriteHeader(http.StatusInternalServerError)
-            wt.Write([]byte(fmt.Sprintf("[ERROR] %s\n\t[INFO] Can't read body", err.Error())))
+            wt.Write([]byte(log_format(ERROR, "Can't read body, %s", err.Error())))
         } else {
             remove_entries(words)
-            fmt.Println("[INFO] Delete ", words)
-            fmt.Fprint(wt, "[INFO] Successfully delete")
-            save_dict(SERVER_DATA_FILE_PATH);
+            log(INFO, "Delete ",  words)
+            fmt.Fprint(wt, log_format(INFO, "Successfully delete"))
+            save_dict();
         }
     case "OPTIONS":
         wt.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET, POST, DELETE")
@@ -273,11 +289,44 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
     }
 }
 
-func save_dict(file_path string) {
+func save_used_words() {
+	data, err := json.Marshal(used_words)
+    Check_err(err, false, "Can't convert used_words array to to json object")
+	err = os.WriteFile(USED_WORDS_FILE_PATH, data, os.FileMode(0644))
+    Check_err(err, false, fmt.Sprintf("Can't save used_words to file `%s`", USED_WORDS_FILE_PATH))
+}
+
+func save_dict() {
     data, err := json.Marshal(Dict)
     Check_err(err, true, "Can't convert map to json object")
-    err = os.WriteFile(file_path, data, os.FileMode(0644))
-    Check_err(err, true, fmt.Sprintf("Can't save dictionary to file `%s`", file_path))
+    err = os.WriteFile(SERVER_DATA_FILE_PATH, data, os.FileMode(0644))
+    Check_err(err, true, fmt.Sprintf("Can't save dictionary to file `%s`", SERVER_DATA_FILE_PATH))
+}
+
+func load_dict() {
+    data, err := os.ReadFile(SERVER_DATA_FILE_PATH)
+    Check_err(err, false, fmt.Sprintf("Can't read dictionary from file `%s`", SERVER_DATA_FILE_PATH))
+    json.Unmarshal(data, &Dict)
+	data, err = os.ReadFile(USED_WORDS_FILE_PATH)
+	if err != nil {
+		log(WARNING, "Can't read last used_words file, %s", err.Error())
+		used_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
+	} else {
+		err = json.Unmarshal(data, &used_words)
+		Check_err(err, false, fmt.Sprintf("Can't read used_words from file `%s`", USED_WORDS_FILE_PATH))
+	}
+    for keyword, entry := range Dict {
+        if entry.Group == nil {
+            entry.Group = make([]string, 0, INIT_ARRAY_BUFFER);
+            Dict[keyword] = entry;
+        }
+		if slices.Index(used_words, keyword) == -1 {
+			unused_words = append(unused_words, keyword)
+		}
+        for _, g := range entry.Group {
+            Group[g] = append(Group[g], entry.Keyword)
+        }
+    }
 }
 
 func start_default_browser() {
@@ -290,53 +339,67 @@ func start_default_browser() {
         _, err := os.StartProcess("/usr/bin/xdg-open", []string{"/usr/bin/xdg-open", "http://" + SERVER_ADDR}, &attr)
         Check_err(err, false, "Can't start default server", fmt.Sprintf("Please open `http://%s` on a browser\n", SERVER_ADDR))
     default:
-        fmt.Println("[WARNING] Unknown platform, the program may not work correctly")
-        fmt.Printf("[INFO] Please open `http://%s` on a browser\n", SERVER_ADDR)
+        log(WARNING, "Unknown platform, the program may not work correctly")
+        log(INFO, "Please open `http://%s` on a browser",  SERVER_ADDR)
     }
 }
 
 func main() {
-    fmt.Printf("[INFO] Root on %s\n", WEB_ROOT)
+    log(INFO, "Root on %s",  WEB_ROOT)
     if (len(os.Args) == 2) {
         SERVER_DATA_FILE_PATH = os.Args[1];
+		USED_WORDS_FILE_PATH = SERVER_DATA_FILE_PATH + ".used"
     }
-    fmt.Printf("[INFO] Dictionary file `%s`\n", SERVER_DATA_FILE_PATH)
-    dict_data, err := os.ReadFile(SERVER_DATA_FILE_PATH)
-    Check_err(err, false, fmt.Sprintf("Can't read dictionary from file `%s`", SERVER_DATA_FILE_PATH))
-    json.Unmarshal(dict_data, &Dict)
-    used_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
-    unused_words = make([]string, 0, len(Dict) + INIT_ARRAY_BUFFER)
-    for keyword, entry := range Dict {
-        if entry.Group == nil {
-            entry.Group = make([]string, 0, INIT_ARRAY_BUFFER);
-            Dict[keyword] = entry;
-        }
-        unused_words = append(unused_words, keyword)
-        for _, g := range entry.Group {
-            Group[g] = append(Group[g], entry.Keyword)
-        }
-    }
-    fmt.Println(unused_words);
+    log(INFO, "Dictionary file `%s`",  SERVER_DATA_FILE_PATH)
+	load_dict()
+	log(INFO, "Number of entries: %d", len(Dict))
+	log(INFO, "Number of unused words: %d", len(unused_words))
+	log(INFO, "Used words: [%s]", strings.Join(used_words, ", "))
     start_default_browser()
-    fmt.Printf("[INFO] Server start on %s\n", SERVER_ADDR)
+    log(INFO, "Server start on %s",  SERVER_ADDR)
     http.ListenAndServe(SERVER_ADDR, MyServer{})
+}
+
+type LogLevel int
+const (
+	WARNING LogLevel = iota
+	ERROR LogLevel = iota
+	INFO LogLevel = iota
+)
+
+func log_format(level LogLevel, format string, args ...any) string {
+	var builder strings.Builder
+	switch level {
+	case WARNING:
+		builder.WriteString("[Warning] ")
+	case ERROR:
+		builder.WriteString("[Error] ")
+	case INFO:
+		builder.WriteString("[Info] ")
+	}
+	builder.WriteString(fmt.Sprintf(format, args...))
+	builder.WriteByte('\n')
+	return builder.String()
+}
+
+func log(level LogLevel, format string, args ...any) {
+	fmt.Print(log_format(level, format, args...))
 }
 
 func Check_err(err error, fatal bool, info ...string) bool {
     if err != nil {
-        var msg_builder strings.Builder
-        if fatal { msg_builder.WriteString("[ERROR] ") } else { msg_builder.WriteString("[WARNING] ") }
-        msg_builder.WriteString(err.Error())
-        msg_builder.WriteString("\n")
+		var log_level LogLevel
+        if fatal {
+			log_level = ERROR
+		} else {
+			log_level = WARNING
+		}
+		log(log_level, err.Error())
         for _, v := range info {
-            msg_builder.WriteString("\t [INFO] ")
-            msg_builder.WriteString(v)
+			log(INFO, "\t %s", v)
         }
         if fatal {
-            fmt.Println(msg_builder.String())
             os.Exit(1)
-        } else {
-            fmt.Println(msg_builder.String())
         }
         return true;
     }

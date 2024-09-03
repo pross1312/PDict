@@ -77,7 +77,7 @@ export default {
     <span class="flex-grow-0 fs-6 mt-auto mb-auto h-100">Group:</span>
     <div v-bind:class="current_group.trim() === '' ? '' : 'ms-2'"
          class="flex-grow-0 btn-group btn-group-sm border-0 border rounded-2">
-        <span class="fs-6">{{current_group}}</span>
+        <span class="fs-6 mt-auto mb-auto">{{current_group}}</span>
         <button type="button" class="m-auto ms-2 btn fs-6 pt-0 pb-0 p-0 border-0 dropdown-toggle dropdown-toggle-split"
                 style="width: fit-content; height: fit-content;"
                 data-bs-toggle="dropdown">
