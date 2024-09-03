@@ -69,7 +69,7 @@ export default {
                     @blur="blur_input()">
                 <span class="visually-hidden">Toggle Dropdown</span>
             </button>
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu" style="height: 200px; overflow-y: auto">
                 <li v-for="group in all_groups.filter(x => !groups.includes(x))">
                     <p  @mousedown.left="select_add_group($event.currentTarget)"
                         style="cursor: pointer;" class="existing-group dropdown-item m-0">{{group}}</p>

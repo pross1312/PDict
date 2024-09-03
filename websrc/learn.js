@@ -27,6 +27,7 @@ export default {
             if (e.key === " ") {
                 if (this.show_answer) this.next_word();
                 this.show_answer = !this.show_answer;
+                return true;
             }
         };
         fetch(`http://localhost:9999/change-learn-group?group=${this.current_group}`).then(async result => {
@@ -35,11 +36,12 @@ export default {
         });
     },
     methods: {
-        edit_entry() {
-            console.log(this.entry)
-            if (this.entry.Keyword.trim() !== "") {
-                this.set_key(this.entry.Keyword);
-                this.change_content('home');
+        mouse_down_left(e) {
+            if (e.currentTarget === e.srcElement && e.button == 0) {
+                if (this.show_answer) this.next_word();
+                this.show_answer = !this.show_answer;
+                e.stopPropagate();
+                return true;
             }
         },
         select_group(group) {
@@ -72,7 +74,7 @@ export default {
         }
     },
     template: `
-<div class="w-100 h-100">
+<div @mousedown.left="mouse_down_left($event)" class="w-100 h-100">
 <span class="d-flex justify-content-start w-100" style="height: fit-content">
     <span class="flex-grow-0 fs-6 mt-auto mb-auto h-100">Group:</span>
     <div v-bind:class="current_group.trim() === '' ? '' : 'ms-2'"
@@ -96,13 +98,9 @@ export default {
             </li>
         </ul>
     </div>
-    <button class="ms-auto btn btn-success btn-sm rounded-0" type="button"
-            @click="edit_entry()">
-        Edit
-    </button>
 </span>
 <entry v-if="entry != null" :entry_data="entry"
-       :has_data="true" :allow_edit="false"
+       :has_data="true" :allow_edit="show_answer"
        :hide_keyword="!show_answer" :hide_usage="!show_answer" :hide_pronounciation="!show_answer"
        @keydown.space="$event.stopPropagation();"/>
 </div>

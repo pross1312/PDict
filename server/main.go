@@ -228,7 +228,7 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             if len(groups) == 0 {
                 groups = append(groups, "Verb", "Noun", "Adjective")
             }
-			log(INFO, "All groups: %s", groups)
+			log(INFO, "Sent %d groups", len(groups))
             json_data, err := json.Marshal(struct{ Group []string }{ groups })
             if Check_err(err, false, "Can't parse json for `nextword` request") {
                 wt.WriteHeader(http.StatusInternalServerError)
@@ -354,7 +354,7 @@ func main() {
 	load_dict()
 	log(INFO, "Number of entries: %d", len(Dict))
 	log(INFO, "Number of unused words: %d", len(unused_words))
-	log(INFO, "Used words: [%s]", strings.Join(used_words, ", "))
+	log(INFO, "Number of Used words: %d", len(used_words))
     start_default_browser()
     log(INFO, "Server start on %s",  SERVER_ADDR)
     http.ListenAndServe(SERVER_ADDR, MyServer{})
