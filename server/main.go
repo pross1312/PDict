@@ -162,6 +162,7 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
 			used_words = temp
 		}
         log(INFO, "Switch used and unused")
+        log(INFO, "%d words left to learn.", len(unused_words))
     }
     index := rand.Intn(len(unused_words))
     key := unused_words[index]
@@ -191,7 +192,18 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
 }
 
 func remove_entries(words []string) {
-    for _, word := range words { delete(Dict, word) }
+    for _, word := range words {
+		delete(Dict, word)
+		if idx := slices.Index(unused_words, word); idx != -1 {
+			unused_words[idx] = unused_words[len(unused_words)-1]
+			unused_words = unused_words[:len(unused_words)-1]
+		} else if idx := slices.Index(used_words, word); idx != -1 {
+			used_words[idx] = used_words[len(used_words)-1]
+			used_words = used_words[:len(used_words)-1]
+		} else {
+			panic("Should never happen");
+		}
+	}
 }
 
 func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
@@ -277,9 +289,10 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             wt.Write([]byte(log_format(ERROR, "Can't read body, %s", err.Error())))
         } else {
             remove_entries(words)
-            log(INFO, "Delete ",  words)
+            log(INFO, "Delete %s",  words)
             fmt.Fprint(wt, log_format(INFO, "Successfully delete"))
             save_dict();
+			save_used_words();
         }
     case "OPTIONS":
         wt.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET, POST, DELETE")
