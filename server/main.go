@@ -191,26 +191,24 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
     }
 }
 
-func remove_entries(words []string) {
-    for _, word := range words {
-		for _, group := range Dict[word].Group {
-			if len(Group[group]) == 1 {
-				if Group[group][0] != word {
-					panic("-_-");
-				}
-				delete(Group, group)
+func remove_entry(word string) {
+	for _, group := range Dict[word].Group {
+		if len(Group[group]) == 1 {
+			if Group[group][0] != word {
+				panic("-_-");
 			}
+			delete(Group, group)
 		}
-		delete(Dict, word)
-		if idx := slices.Index(unused_words, word); idx != -1 {
-			unused_words[idx] = unused_words[len(unused_words)-1]
-			unused_words = unused_words[:len(unused_words)-1]
-		} else if idx := slices.Index(used_words, word); idx != -1 {
-			used_words[idx] = used_words[len(used_words)-1]
-			used_words = used_words[:len(used_words)-1]
-		} else {
-			panic("Should never happen");
-		}
+	}
+	delete(Dict, word)
+	if idx := slices.Index(unused_words, word); idx != -1 {
+		unused_words[idx] = unused_words[len(unused_words)-1]
+		unused_words = unused_words[:len(unused_words)-1]
+	} else if idx := slices.Index(used_words, word); idx != -1 {
+		used_words[idx] = used_words[len(used_words)-1]
+		used_words = used_words[:len(used_words)-1]
+	} else {
+		panic("Should never happen");
 	}
 }
 
@@ -303,9 +301,15 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             wt.WriteHeader(http.StatusInternalServerError)
             wt.Write([]byte(log_format(ERROR, "Can't read body, %s", err.Error())))
         } else {
-            remove_entries(words)
-            log(INFO, "Delete %s",  words)
-            fmt.Fprint(wt, log_format(INFO, "Successfully delete"))
+			for _, word := range words {
+				if _, ok := Dict[word]; ok {
+					remove_entry(word)
+					log(INFO, "Delete %s",  word)
+				} else {
+					log(INFO, "Entry %s does not exist", word)
+				}
+			}
+            fmt.Fprint(wt, log_format(INFO, "Successfully"))
             save_dict();
 			save_used_words();
         }
