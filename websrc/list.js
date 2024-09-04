@@ -61,8 +61,8 @@ export default {
         },
     },
     template: `
-<div id="confirm-container" class="d-none h-100 w-100 position-absolute d-flex flex-column justify-content-center"
-     style="background-color: #101010bb; z-index: 1000;">
+<div id="confirm-container" class="d-none position-absolute d-flex flex-column justify-content-center"
+     style="background-color: #101010bb; z-index: 1000; top: 0px; left: 0px; height: 100vh; width: 100vw;">
      <div class="d-inline-block m-auto bg-body-secondary rounded pt-2 pb-2 p-4"
           style="width: fit-content; height: fit-content;">
          <span class="d-block text-center" style="color: red;">Confirm delete?</span>
