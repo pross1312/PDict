@@ -5,7 +5,7 @@ export default {
     setup() {
         let all_groups = ref([]);
         let current_group = ref("");
-        fetch("http://localhost:9999/list-group").then(async result => {
+        fetch(`http://${window.location.host}/list-group`).then(async result => {
             if (result.headers.get("Content-Type").match("application/json") != null) {
                 all_groups.value = (await result.json()).Group;
             }
@@ -30,7 +30,7 @@ export default {
                 return true;
             }
         };
-        fetch(`http://localhost:9999/change-learn-group?group=${this.current_group}`).then(async result => {
+        fetch(`http://${window.location.host}/change-learn-group?group=${this.current_group}`).then(async result => {
             console.log(await result.text());
             this.next_word();
         });
@@ -46,12 +46,12 @@ export default {
         },
         select_group(group) {
             this.keywords = [];
-            fetch(`http://localhost:9999/list?group=${group}`).then(async result => {
+            fetch(`http://${window.location.host}/list?group=${group}`).then(async result => {
                 if (result.headers.get("Content-Type").match("application/json") != null) {
                     let items = await result.json();
                     this.keywords.push(...items);
                     this.current_group = group
-                    fetch(`http://localhost:9999/change-learn-group?group=${group}`).then(async result => {
+                    fetch(`http://${window.location.host}/change-learn-group?group=${group}`).then(async result => {
                         console.log(await result.text());
                         this.next_word();
                     });
@@ -59,7 +59,7 @@ export default {
             }).catch(err => {alert(err);});
         },
         next_word() {
-            const server_nextword_addr   = "http://localhost:9999/nextword";
+            const server_nextword_addr   = `http://${window.location.host}/nextword`;
             fetch(server_nextword_addr).then(async result => {
                 if (result.headers.get("Content-Type").includes("application/json")) {
                     let data = await result.json();

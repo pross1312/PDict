@@ -30,7 +30,7 @@ export default {
         search(key) {
             this.has_data = false;
             this.entry_data = new entry.new_entry();
-            const search_url = "http://localhost:9999/query?key="
+            const search_url = `http://${window.location.host}/query?key=`
             key = key.trim();
             if (key !== "") {
                 fetch(search_url + key).then(result => {

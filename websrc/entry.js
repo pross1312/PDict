@@ -32,7 +32,7 @@ export default {
     setup() {
         let all_groups = ref([]);
         const update_group = function() {
-            fetch("http://localhost:9999/list-group").then(async result => {
+            fetch(`http://${window.location.host}/list-group`).then(async result => {
                 if (result.headers.get("Content-Type").match("application/json") != null) {
                     all_groups.value = (await result.json()).Group;
                 }
@@ -46,7 +46,7 @@ export default {
     },
     methods: {
         update_data(event) {
-            const update_url = "http://localhost:9999/update"
+            const update_url = `http://${window.location.host}/update`
             if (this.entry_data.Keyword.trim() == "") return;
             let entry = {...this.entry_data};
             if (entry.Definition.length > 0) {

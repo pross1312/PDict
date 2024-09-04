@@ -8,14 +8,14 @@ export default {
         let has_data = ref(false);
         let all_groups = ref([]);
         let current_group = ref("");
-        fetch("http://localhost:9999/list").then(async result => {
+        fetch(`http://${window.location.host}/list`).then(async result => {
             if (result.headers.get("Content-Type").match("application/json") != null) {
                 let items = await result.json();
                 keywords.value.push(...items);
                 has_data.value = true;
             }
         }).catch(err => alert(err));
-        fetch("http://localhost:9999/list-group").then(async result => {
+        fetch(`http://${window.location.host}/list-group`).then(async result => {
             if (result.headers.get("Content-Type").match("application/json") != null) {
                 all_groups.value = (await result.json()).Group;
             }
@@ -25,7 +25,7 @@ export default {
     methods: {
         remove_key(key) {
             key = key.trim();
-            fetch("http://localhost:9999/list", {
+            fetch("http://${window.location.host}/list", {
                 method: "DELETE",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify([key]),
@@ -38,7 +38,7 @@ export default {
         select_group(group) {
             this.has_data = false;
             this.keywords = [];
-            fetch(`http://localhost:9999/list?group=${group}`).then(async result => {
+            fetch(`http://${window.location.host}/list?group=${group}`).then(async result => {
                 if (result.headers.get("Content-Type").match("application/json") != null) {
                     let items = await result.json();
                     this.keywords.push(...items);

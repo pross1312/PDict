@@ -25,7 +25,7 @@ type MyServer struct {}
 
 const (
     INIT_ARRAY_BUFFER = 8
-    SERVER_ADDR = "localhost:9999"
+    SERVER_ADDR = "0.0.0.0:9999"
     WEB_ROOT = "../websrc"
 )
 
