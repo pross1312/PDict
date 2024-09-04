@@ -193,6 +193,14 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
 
 func remove_entries(words []string) {
     for _, word := range words {
+		for _, group := range Dict[word].Group {
+			if len(Group[group]) == 1 {
+				if Group[group][0] != word {
+					panic("-_-");
+				}
+				delete(Group, group)
+			}
+		}
 		delete(Dict, word)
 		if idx := slices.Index(unused_words, word); idx != -1 {
 			unused_words[idx] = unused_words[len(unused_words)-1]
@@ -261,16 +269,23 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             wt.WriteHeader(http.StatusInternalServerError)
 			wt.Write([]byte(log_format(ERROR, "Can't read body, %s", err.Error())))
         } else {
-            var prev_group = Dict[entry.Keyword].Group
+            var prev_groups = Dict[entry.Keyword].Group
             Dict[entry.Keyword] = entry;
-            for _, group := range prev_group {
-                if slices.Index(entry.Group, group) == -1 {
-                    Group[group] = slices.DeleteFunc(Group[group], func(x string)bool{
-                        return entry.Keyword == x
-                    });
-                }
+            for _, old_group := range prev_groups { // remove group that this word is not in anymore
+				if !slices.Contains(entry.Group, old_group) {
+					if idx := slices.Index(Group[old_group], entry.Keyword); idx != -1 {
+						if len(Group[old_group]) == 0 {
+							delete(Group, old_group)
+						} else {
+							Group[old_group][idx] = Group[old_group][len(Group[old_group])-1]
+							Group[old_group] = Group[old_group][:len(Group[old_group])-1]
+						}
+					} else {
+						panic("Entry must be in previous groups right??");
+					}
+				}
             }
-            for _, group := range entry.Group {
+            for _, group := range entry.Group { // add this word to group that this word is in
                 if slices.Index(Group[group], entry.Keyword) == -1 {
                     Group[group] = append(Group[group], entry.Keyword)
                 }

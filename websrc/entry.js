@@ -23,23 +23,15 @@ export default {
             type: Boolean,
             default: true
         },
+        allow_delete: {
+            type: Boolean,
+            default: true,
+        },
         has_data: {
             type: Boolean,
             default: false,
             required: true
         },
-    },
-    setup() {
-        let all_groups = ref([]);
-        const update_group = function() {
-            fetch(`http://${window.location.host}/list-group`).then(async result => {
-                if (result.headers.get("Content-Type").match("application/json") != null) {
-                    all_groups.value = (await result.json()).Group;
-                }
-            }).catch(err => {alert(err);});
-        }
-        update_group();
-        return {all_groups, update_group};
     },
     components: {
         input_list, group_selector
@@ -58,11 +50,26 @@ export default {
                 body: JSON.stringify(entry),
             }).then(result => {
                 console.log(result.statusText);
-                this.update_group();
             }).catch(err => {alert(err)});
             event.preventDefault();
-            return false;
+            event.stopPropagation();
+            return true;
         },
+        remove_entry(e) {
+            if (this.entry_data.Keyword.trim() == "") return;
+            fetch(`http://${window.location.host}/list`, {
+                method: "DELETE",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify([this.entry_data.Keyword.trim()]),
+            }).then(result => {
+                console.log(result.statusText);
+                this.$emit("entry-removed");
+            }).catch(err => {
+                alert(err);
+            });
+            e.stopPropagation();
+            return true;
+        }
     },
     template: `
 <div class="container-fluid mt-2" v-if="has_data">
@@ -82,14 +89,17 @@ export default {
                @change="entry_data.Pronounciation = $event.currentTarget.value"
                :value="entry_data.Pronounciation"
                placeholder="-Add pronounciation-" />
-        <group_selector form_id="data-form" submit_name="Group" :groups="entry_data.Group" :all_groups="all_groups" :allow_edit="allow_edit"/>
+        <group_selector form_id="data-form" submit_name="Group" :groups="entry_data.Group" :allow_edit="allow_edit"/>
         <input_list form_id="data-form" label="Definition" :items="entry_data.Definition" :allow_edit="allow_edit"/>
         <span v-bind:style="hide_pronounciation ? 'visibility: hidden' : ''">
             <input_list form_id="data-form" label="Usage" :items="entry_data.Usage"
                         :allow_edit="allow_edit"/>
         </span>
-        <button type="submit" class="d-none"></button>
     </form>
+    <span v-if="allow_edit" class="d-flex w-100 justify-content-end">
+        <button v-if="allow_delete" @click="remove_entry($event)" class="btn btn-secondary btn-sm me-3">Remove</button>
+        <button @click="update_data($event)" class="btn btn-primary btn-sm">Submit</button>
+    </span>
 </div>
 `,
     new_entry: function() {

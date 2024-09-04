@@ -40,12 +40,13 @@ export default {
             if (e.currentTarget === e.srcElement && e.button == 0) {
                 if (this.show_answer) this.next_word();
                 this.show_answer = !this.show_answer;
-                e.stopPropagate();
+                e.stopPropagation();
                 return true;
             }
         },
         select_group(group) {
             this.keywords = [];
+            this.show_answer = false;
             fetch(`http://${window.location.host}/list?group=${group}`).then(async result => {
                 if (result.headers.get("Content-Type").match("application/json") != null) {
                     let items = await result.json();
@@ -100,9 +101,10 @@ export default {
     </div>
 </span>
 <entry v-if="entry != null" :entry_data="entry"
-       :has_data="true" :allow_edit="show_answer"
+       :has_data="true" :allow_edit="show_answer" :allow_delete="false"
        :hide_keyword="!show_answer" :hide_usage="!show_answer" :hide_pronounciation="!show_answer"
-       @keydown.space="$event.stopPropagation();"/>
+       @keydown.space="$event.stopPropagation();"
+       @entry-removed="next_word()"/>
 </div>
 `
 }

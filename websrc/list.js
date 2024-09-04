@@ -1,10 +1,12 @@
 import {ref} from "vue";
 export default {
-    props: ["per_row"],
     inject: ["set_key", "change_content"],
     setup(props) {
         let keywords = ref([]);
-        const per_row = props.per_row || 6;
+        let to_be_removed = "";
+        const element_width = 190;
+        const per_row = Math.max((window.innerWidth/element_width) >> 0, 2);
+        console.log(window.innerWidth, per_row);
         let has_data = ref(false);
         let all_groups = ref([]);
         let current_group = ref("");
@@ -20,20 +22,30 @@ export default {
                 all_groups.value = (await result.json()).Group;
             }
         }).catch(err => alert(err));
-        return {has_data, keywords, per_row, all_groups, current_group};
+        return {has_data, keywords, per_row, all_groups, current_group, to_be_removed, element_width};
     },
     methods: {
-        remove_key(key) {
-            key = key.trim();
-            fetch("http://${window.location.host}/list", {
+        cancel_remove_key() {
+            document.getElementById("confirm-container").classList.add("d-none");
+        },
+        confirm_remove_key() {
+            let key = this.to_be_removed.trim();
+            fetch(`http://${window.location.host}/list`, {
                 method: "DELETE",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify([key]),
             }).then(result => {
                 console.log(result.statusText);
+                let index = this.keywords.indexOf(key);
+                if (index != -1) this.keywords.splice(index, 1);
+                document.getElementById("confirm-container").classList.add("d-none");
+            }).catch(err => {
+                alert(err);
             });
-            let index = this.keywords.indexOf(key);
-            if (index != -1) this.keywords.splice(index, 1);
+        },
+        remove_key(key) {
+            this.to_be_removed = key;
+            document.getElementById("confirm-container").classList.remove("d-none");
         },
         select_group(group) {
             this.has_data = false;
@@ -49,6 +61,17 @@ export default {
         },
     },
     template: `
+<div id="confirm-container" class="d-none h-100 w-100 position-absolute d-flex flex-column justify-content-center"
+     style="background-color: #101010bb; z-index: 1000;">
+     <div class="d-inline-block m-auto bg-body-secondary rounded pt-2 pb-2 p-4"
+          style="width: fit-content; height: fit-content;">
+         <span class="d-block text-center" style="color: red;">Confirm delete?</span>
+         <span class="d-block mt-2">
+             <button class="me-2 btn btn-sm btn-primary" @click="confirm_remove_key()">Confirm</button>
+             <button class="ms-2 btn btn-sm btn-secondary" @click="cancel_remove_key()">Cancel</button>
+         </span>
+     </div>
+</div>
 <div v-if="has_data" class="m-0 p-0 border-0" style="height: 100%; width: 100%; overflow-y: hidden !important">
 <div class="position-absolute z-1 ps-1 pe-1">
     <span>Group:</span>
@@ -73,16 +96,18 @@ export default {
         </ul>
     </div>
 </div>
-<div class="container-fluid" style="height: 100%; margin-top: 1em; padding-bottom: 3em; overflow-x: hidden !important">
+<div class="container-fluid" style="height: 100%; margin-top: 1em; padding-bottom: 5em; overflow-x: hidden !important">
     <div v-for="(_, row) in Number((keywords.length/per_row) >> 0) + 1"
          class="row d-flex flex gx-5 mt-3">
-        <div v-for="(_, col) in per_row" :class="['col-' + ((12/per_row)>>0)]">
-            <span v-if="row*per_row + Number(col) < keywords.length" class="h-100 d-inline-flex">
-                <span class="d-flex flex-column h-100 justify-content-center bg-body-secondary">
+        <div v-for="(_, col) in per_row" :class="['col-' + ((12/per_row)>>0)]"
+             class="d-flex col">
+            <span v-if="row*per_row + Number(col) < keywords.length" class="h-100 d-flex flex-grow-1">
+                <span class="d-flex flex-column h-100 justify-content-center bg-body-secondary"
+                      style="width: fit-content;">
                     <button class="btn-close d-inline"
                             @mousedown.left="remove_key(keywords[row*per_row  + Number(col)])"></button>
                 </span>
-                <button class="pt-1 pb-1 btn btn-sm btn-secondary rounded-0 text-wrap" style="height: 100%; width: fit-content;"
+                <button class="pt-1 pb-1 btn btn-sm btn-secondary rounded-0 text-wrap"
                         @mousedown.left="set_key(keywords[row*per_row + Number(col)]); change_content('home')">
                     {{keywords[row*per_row + Number(col)]}}
                 </button>

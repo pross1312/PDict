@@ -16,14 +16,14 @@ export default {
     components: {
         entry
     },
-    provide() {
-        return {
-            DATA: computed(() => this.entry_data),
-        };
-    },
     methods: {
+        reset() {
+            this.has_data = false;
+            this.entry = ref(new entry.new_entry());
+        },
         search_submit(event) {
             this.search((new FormData(event.currentTarget)).get("key"));
+            event.stopPropagation();
             event.preventDefault();
             return false;
         },
@@ -56,7 +56,8 @@ export default {
         <input class="form-control form-control-md me-2" type="search" name="key" placeholder="Search" aria-label="Search">
         <button class="btn btn-light" tabindex="-1" id="search-submit" type="submit" form="search-form">Search</button>
     </form>
-    <entry :entry_data="entry_data" :has_data="has_data"/>
+    <entry :entry_data="entry_data" :has_data="has_data"
+           @entry-removed="reset()" />
 </div>
 `
 }

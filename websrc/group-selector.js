@@ -1,8 +1,20 @@
-import {reactive} from "vue";
+import {ref} from "vue";
 export default {
-    props: ["submit_name", "groups", "form_id", "all_groups", "allow_edit"],
+    props: ["submit_name", "groups", "form_id", "allow_edit"],
     data() {
+        let all_groups = ref([]);
+        const update_group = function(on_success) {
+            fetch(`http://${window.location.host}/list-group`).then(async result => {
+                if (result.headers.get("Content-Type").match("application/json") != null) {
+                    all_groups.value = (await result.json()).Group;
+                    if (on_success) on_success();
+                }
+            }).catch(err => {alert(err);});
+        }
+        update_group(null);
         return {
+            update_group,
+            all_groups,
             on_selecting: false, // because mousedown is fired first ??? important for this hack to work until i find a better way
                                  // then when mousedown on input or select box set it to true,
                                  // on blur of these two, if not on_selecting (did not click input or select box)
@@ -34,16 +46,18 @@ export default {
             this.toggle_new_group(false)
         },
         toggle_new_group(show_input) {
-            let node = document.getElementById("new-group-input");
-            if (!show_input) {
-                node.parentNode.classList.add("d-none");
-                node.parentNode.nextSibling.classList.remove("d-none");
-            } else {
-                node.value = "";
-                node.parentNode.classList.remove("d-none");
-                node.parentNode.nextSibling.classList.add("d-none");
-                node.focus();
-            }
+            this.update_group(() => {
+                let node = document.getElementById("new-group-input");
+                if (!show_input) {
+                    node.parentNode.classList.add("d-none");
+                    node.parentNode.nextSibling.classList.remove("d-none");
+                } else {
+                    node.value = "";
+                    node.parentNode.classList.remove("d-none");
+                    node.parentNode.nextSibling.classList.add("d-none");
+                    node.focus();
+                }
+            });
         }
     },
     components: {
