@@ -2,6 +2,7 @@ import input_list from "./input-list.js";
 import group_selector from "./group-selector.js";
 import {ref} from "vue";
 export default {
+    emits: ["entry-removed"],
     props: {
         entry_data: {
             type: Object,
@@ -55,7 +56,10 @@ export default {
             event.stopPropagation();
             return true;
         },
-        remove_entry(e) {
+        cancel_remove_entry() {
+            document.getElementById("confirm-container").classList.add("d-none");
+        },
+        confirm_remove_entry() {
             if (this.entry_data.Keyword.trim() == "") return;
             fetch(`http://${window.location.host}/list`, {
                 method: "DELETE",
@@ -63,15 +67,30 @@ export default {
                 body: JSON.stringify([this.entry_data.Keyword.trim()]),
             }).then(result => {
                 console.log(result.statusText);
+                document.getElementById("confirm-container").classList.add("d-none");
                 this.$emit("entry-removed");
             }).catch(err => {
                 alert(err);
             });
+        },
+        remove_entry(e) {
+            document.getElementById("confirm-container").classList.remove("d-none");
             e.stopPropagation();
             return true;
         }
     },
     template: `
+<div id="confirm-container" class="d-none h-100 w-100 position-absolute d-flex flex-column justify-content-center"
+     style="background-color: #101010bb; z-index: 1000;">
+     <div class="d-inline-block m-auto bg-body-secondary rounded pt-2 pb-2 p-4"
+          style="width: fit-content; height: fit-content;">
+         <span class="d-block text-center" style="color: red;">Confirm delete?</span>
+         <span class="d-block mt-2">
+             <button class="me-2 btn btn-sm btn-primary" @click="confirm_remove_entry()">Confirm</button>
+             <button class="ms-2 btn btn-sm btn-secondary" @click="cancel_remove_entry()">Cancel</button>
+         </span>
+     </div>
+</div>
 <div class="container-fluid mt-2" v-if="has_data">
     <form action="/" class="" target="discard-frame"
           @submit="update_data($event)"
