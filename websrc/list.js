@@ -1,6 +1,6 @@
 import {ref} from "vue";
 export default {
-    inject: ["set_key", "change_content"],
+    inject: ["set_key", "change_content", "show_error_msg", "show_success_msg"],
     setup(props) {
         let keywords = ref([]);
         let to_be_removed = "";
@@ -16,12 +16,12 @@ export default {
                 keywords.value.push(...items);
                 has_data.value = true;
             }
-        }).catch(err => alert(err));
+        }).catch(err => this.show_error_msg(err));
         fetch(`http://${window.location.host}/list-group`).then(async result => {
             if (result.headers.get("Content-Type").match("application/json") != null) {
                 all_groups.value = (await result.json()).Group;
             }
-        }).catch(err => alert(err));
+        }).catch(err => this.show_error_msg(err));
         return {has_data, keywords, per_row, all_groups, current_group, to_be_removed, element_width};
     },
     methods: {
@@ -39,8 +39,9 @@ export default {
                 let index = this.keywords.indexOf(key);
                 if (index != -1) this.keywords.splice(index, 1);
                 document.getElementById("confirm-container").classList.add("d-none");
+                this.show_success_msg("Successfully remove entry");
             }).catch(err => {
-                alert(err);
+                this.show_error_msg(err);
             });
         },
         remove_key(key) {
@@ -57,7 +58,7 @@ export default {
                     this.current_group = group
                     this.has_data = true;
                 }
-            }).catch(err => {alert(err);});
+            }).catch(err => {this.show_error_msg(err);});
         },
     },
     template: `

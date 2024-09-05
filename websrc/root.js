@@ -37,6 +37,40 @@ export default {
             }
         }
         return {
+            show_success_msg: (msg) => {
+                console.log(msg);
+                Toastify({
+                    text: msg,
+                    duration: 500,
+                    // destination: "https://github.com/apvarun/toastify-js",
+                    // newWindow: true,
+                    close: false,
+                    gravity: "top", // `top` or `bottom`
+                    position: "left", // `left`, `center` or `right`
+                    stopOnFocus: true, // Prevents dismissing of toast on hover
+                    style: {
+                        background: "linear-gradient(to right, #00b09b, #96c93d)",
+                    },
+                    // onClick: function(){} // Callback after click
+                }).showToast();
+            },
+            show_error_msg: (msg) => {
+                console.log(msg);
+                Toastify({
+                    text: msg,
+                    duration: -1,
+                    // destination: "https://github.com/apvarun/toastify-js",
+                    // newWindow: true,
+                    close: true,
+                    gravity: "top", // `top` or `bottom`
+                    position: "left", // `left`, `center` or `right`
+                    stopOnFocus: true, // Prevents dismissing of toast on hover
+                    style: {
+                        background: "linear-gradient(to right, #b0009b, #c9933d)",
+                    },
+                    // onClick: function(){} // Callback after click
+                }).showToast();
+            },
             search_key: computed(() => this.current_key),
             change_content: this.change_content,
             set_key: computed(() => (k) => {this.current_key = k;}),

@@ -1,7 +1,7 @@
 import entry from "./entry.js"
 import {ref} from "vue"
 export default {
-    inject: ["set_key", "change_content"],
+    inject: ["set_key", "change_content", "show_error_msg"],
     setup() {
         let all_groups = ref([]);
         let current_group = ref("");
@@ -26,40 +26,40 @@ export default {
         entry,
     },
     mounted() {
-        window.onkeydown = (e) => {
+        window.onkeydown = async (e) => {
             if (e.key === " ") {
-                if (this.show_answer) this.next_word();
+                if (this.show_answer) await this.next_word();
                 this.show_answer = !this.show_answer;
                 return true;
             }
         };
         fetch(`http://${window.location.host}/change-learn-group?group=${this.current_group}`).then(async result => {
             console.log(await result.text());
-            this.next_word();
+            await this.next_word();
         });
     },
     methods: {
-        mouse_down_left(e) {
+        async mouse_down_left(e) {
             if (e.currentTarget === e.srcElement && e.button == 0) {
-                if (this.show_answer) this.next_word();
+                if (this.show_answer) await this.next_word();
                 this.show_answer = !this.show_answer;
                 e.stopPropagation();
                 return true;
             }
         },
-        select_group(group) {
+        async select_group(group) {
             this.show_answer = false;
-            fetch(`http://${window.location.host}/change-learn-group?group=${group}`).then(async result => {
+            await fetch(`http://${window.location.host}/change-learn-group?group=${group}`).then(async result => {
                 console.log(await result.text());
-                this.next_word();
+                await this.next_word();
                 this.current_group = group;
             }).catch(err => {
-                alert(err)
+                this.show_error_msg(err);
             });
         },
-        next_word() {
+        async next_word() {
             const server_nextword_addr   = `http://${window.location.host}/nextword`;
-            fetch(server_nextword_addr).then(async result => {
+            await fetch(server_nextword_addr).then(async result => {
                 if (result.headers.get("Content-Type").includes("application/json")) {
                     let data = await result.json();
                     data.Definition = data.Definition;
@@ -69,7 +69,9 @@ export default {
                     this.keyword = "No word to learn";
                     this.entry = null;
                 }
-            }).catch(err => {alert(err);});
+            }).catch(err => {
+                this.show_error_msg(err);
+            });
         }
     },
     template: `
@@ -101,7 +103,6 @@ export default {
 <entry v-if="entry != null" :entry_data="entry"
        :has_data="true" :allow_edit="show_answer" :allow_delete="false"
        :hide_keyword="!show_answer" :hide_usage="!show_answer" :hide_pronounciation="!show_answer"
-       @keydown.space="$event.stopPropagation();"
        @entry-removed="next_word()"
        @entry-updated="fetch_groups()"/>
 </div>

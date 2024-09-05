@@ -2,6 +2,7 @@ import input_list from "./input-list.js";
 import group_selector from "./group-selector.js";
 import {ref} from "vue";
 export default {
+    inject: ["show_success_msg", "show_error_msg"],
     emits: ["entry-removed", "entry-updated"],
     props: {
         entry_data: {
@@ -51,8 +52,11 @@ export default {
                 body: JSON.stringify(entry),
             }).then(result => {
                 console.log(result.statusText);
+                this.show_success_msg("Successfully update entry");
                 this.$emit("entry-updated");
-            }).catch(err => {alert(err)});
+            }).catch(err => {
+                this.show_error_msg(err);
+            });
             event.preventDefault();
             event.stopPropagation();
             return true;
@@ -70,8 +74,9 @@ export default {
                 console.log(result.statusText);
                 document.getElementById("confirm-container").classList.add("d-none");
                 this.$emit("entry-removed");
+                this.show_success_msg("Successfully remove entry");
             }).catch(err => {
-                alert(err);
+                this.show_error_msg(err);
             });
         },
         remove_entry(e) {
