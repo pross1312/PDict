@@ -2,7 +2,7 @@ import input_list from "./input-list.js";
 import group_selector from "./group-selector.js";
 import {ref} from "vue";
 export default {
-    emits: ["entry-removed"],
+    emits: ["entry-removed", "entry-updated"],
     props: {
         entry_data: {
             type: Object,
@@ -51,6 +51,7 @@ export default {
                 body: JSON.stringify(entry),
             }).then(result => {
                 console.log(result.statusText);
+                this.$emit("entry-updated");
             }).catch(err => {alert(err)});
             event.preventDefault();
             event.stopPropagation();

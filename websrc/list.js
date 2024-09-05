@@ -76,9 +76,9 @@ export default {
 <div class="position-absolute z-1 ps-1 pe-1">
     <span>Group:</span>
     <div v-bind:class="current_group.trim() === '' ? '' : 'ms-2'"  class="btn-group btn-group-sm border-0 border rounded-2">
-        <span class="fs-6">{{current_group}}</span>
+        <span class="fs-6" style="color: yellow;">{{current_group}}</span>
         <button type="button" class="m-auto ms-2 btn fs-6 pt-0 pb-0 p-0 border-0 dropdown-toggle dropdown-toggle-split"
-                style="width: fit-content; height: fit-content;"
+                style="width: fit-content; height: fit-content; color: yellow;"
                 data-bs-toggle="dropdown">
         </button>
         <span class="visually-hidden">Toggle Dropdown</span>

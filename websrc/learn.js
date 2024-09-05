@@ -5,12 +5,15 @@ export default {
     setup() {
         let all_groups = ref([]);
         let current_group = ref("");
-        fetch(`http://${window.location.host}/list-group`).then(async result => {
-            if (result.headers.get("Content-Type").match("application/json") != null) {
-                all_groups.value = (await result.json()).Group;
-            }
-        }).catch(err => alert(err));
-        return {all_groups, current_group};
+        let fetch_groups = () => {
+            fetch(`http://${window.location.host}/list-group`).then(async result => {
+                if (result.headers.get("Content-Type").match("application/json") != null) {
+                    all_groups.value = (await result.json()).Group;
+                }
+            }).catch(err => alert(err));
+        };
+        fetch_groups();
+        return {all_groups, current_group, fetch_groups};
     },
     data() {
         return {
@@ -45,19 +48,14 @@ export default {
             }
         },
         select_group(group) {
-            this.keywords = [];
             this.show_answer = false;
-            fetch(`http://${window.location.host}/list?group=${group}`).then(async result => {
-                if (result.headers.get("Content-Type").match("application/json") != null) {
-                    let items = await result.json();
-                    this.keywords.push(...items);
-                    this.current_group = group
-                    fetch(`http://${window.location.host}/change-learn-group?group=${group}`).then(async result => {
-                        console.log(await result.text());
-                        this.next_word();
-                    });
-                }
-            }).catch(err => {alert(err);});
+            fetch(`http://${window.location.host}/change-learn-group?group=${group}`).then(async result => {
+                console.log(await result.text());
+                this.next_word();
+                this.current_group = group;
+            }).catch(err => {
+                alert(err)
+            });
         },
         next_word() {
             const server_nextword_addr   = `http://${window.location.host}/nextword`;
@@ -80,15 +78,15 @@ export default {
     <span class="flex-grow-0 fs-6 mt-auto mb-auto h-100">Group:</span>
     <div v-bind:class="current_group.trim() === '' ? '' : 'ms-2'"
          class="flex-grow-0 btn-group btn-group-sm border-0 border rounded-2">
-        <span class="fs-6 mt-auto mb-auto">{{current_group}}</span>
+        <span class="fs-6 mt-auto mb-auto" style="color: yellow;">{{current_group}}</span>
         <button type="button" class="m-auto ms-2 btn fs-6 pt-0 pb-0 p-0 border-0 dropdown-toggle dropdown-toggle-split"
-                style="width: fit-content; height: fit-content;"
+                style="width: fit-content; height: fit-content; color: yellow;"
                 data-bs-toggle="dropdown">
         </button>
         <span class="visually-hidden">Toggle Dropdown</span>
         <ul class="dropdown-menu overflow-auto" style="height: 300px">
             <li>
-                <p style="cursor: pointer; color: yellow"
+                <p style="cursor: pointer; color: yellow;"
                    @mousedown.left="select_group('')"
                    class="dropdown-item m-0 fs-6 pt-0 pb-0">-ALL-</p>
             </li>
@@ -104,7 +102,8 @@ export default {
        :has_data="true" :allow_edit="show_answer" :allow_delete="false"
        :hide_keyword="!show_answer" :hide_usage="!show_answer" :hide_pronounciation="!show_answer"
        @keydown.space="$event.stopPropagation();"
-       @entry-removed="next_word()"/>
+       @entry-removed="next_word()"
+       @entry-updated="fetch_groups()"/>
 </div>
 `
 }

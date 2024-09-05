@@ -9,23 +9,20 @@ export default {
                     all_groups.value = (await result.json()).Group;
                     if (on_success) on_success();
                 }
-            }).catch(err => {alert(err);});
+            }).catch(err => {
+                alert(err);
+            });
         }
         update_group(null);
         return {
             update_group,
             all_groups,
-            on_selecting: false, // because mousedown is fired first ??? important for this hack to work until i find a better way
-                                 // then when mousedown on input or select box set it to true,
-                                 // on blur of these two, if not on_selecting (did not click input or select box)
-                                 // then blur input else set on_selecting to false and do nothing
+            on_adding: false,
+            on_editing: false,
+            on_selecting: false,
         }
     },
     methods: {
-        blur_input() {
-            if (!this.on_selecting) this.toggle_new_group(false);
-            this.on_selecting = false;
-        },
         remove_group(group_name, e) {
             let index = this.groups.indexOf(group_name);
             if (index != -1) this.groups.splice(index, 1);
@@ -33,64 +30,53 @@ export default {
             document.getElementById(this.form_id).dispatchEvent(new Event('submit'));
             return true;
         },
-        calc_size(val) {
-            return (val.length * 1.3)>>0;
-        },
-        select_add_group(node) {
-            this.add_group(node.innerText);
-            document.getElementById(this.form_id).dispatchEvent(new Event('submit'));
-        },
         add_group(g) {
             g = g.trim();
             if (!this.groups.includes(g)) this.groups.push(g);
+            document.getElementById(this.form_id).dispatchEvent(new Event('submit'));
             this.toggle_new_group(false)
         },
         toggle_new_group(show_input) {
-            this.update_group(() => {
-                let node = document.getElementById("new-group-input");
-                if (!show_input) {
-                    node.parentNode.classList.add("d-none");
-                    node.parentNode.nextSibling.classList.remove("d-none");
-                } else {
+            if (show_input) {
+                this.on_adding = true;
+                this.update_group(() => {
+                    let node = document.getElementById("new-group-input");
                     node.value = "";
-                    node.parentNode.classList.remove("d-none");
-                    node.parentNode.nextSibling.classList.add("d-none");
                     node.focus();
-                }
-            });
+                });
+            } else {
+                this.on_adding = false;
+            }
         }
     },
-    components: {
-        btn_selector: `
-`
-    },
     template: `
-<span class="btn-group d-flex justify-content-start" style="scale: 0.7; transform-origin: left">
+<span class="btn-group d-flex justify-content-start flex-wrap" style="scale: 0.7; transform-origin: left">
     <input v-for="group in groups" type="text" :size="Number((group.length * 1.1) >> 0)"
            v-bind:style="allow_edit ? '' : 'pointer-events: none'"
            class="border fs-6 border-2 rounded-0 flex-grow-0 btn-sm btn btn-secondary px-1"
            @dblclick="remove_group(group, $event)"
            :name="submit_name + '[]'" :value="group" readonly/>
     <div class="d-flex ms-1 flex-grow-0">
-        <div class="w-75 btn-group btn-group-sm d-flex border-1 border rounded-2 d-none">
+        <div v-if="on_adding" class="w-75 btn-group btn-group-sm d-flex border-1 border rounded-2">
             <input id="new-group-input"
-                   @blur="blur_input()"
-                   @mousedown.left="on_selecting = true"
                    @change="add_group($event.currentTarget.value)"
+                   @blur="on_editing = false; on_adding = on_selecting;"
+                   @mousedown.left="on_editing = true;"
                    type="text" class="form-control form-control-sm border-0"/>
-            <button v-if="all_groups.filter(x => !groups.includes(x)).length > 0" type="button" class="btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" 
-                    @mousedown.left="on_selecting = true"
-                    @blur="blur_input()">
+            <button v-if="all_groups.filter(x => !groups.includes(x)).length > 0" type="button" class="btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    @mousedown.left="on_selecting = true;"
+                    @blur="on_selecting = false; on_adding = on_editing;">
                 <span class="visually-hidden">Toggle Dropdown</span>
             </button>
             <ul class="dropdown-menu" style="height: 200px; overflow-y: auto">
                 <li v-for="group in all_groups.filter(x => !groups.includes(x))">
-                    <p  @mousedown.left="select_add_group($event.currentTarget)"
+                    <p  @mousedown.left="add_group($event.currentTarget.innerText)"
                         style="cursor: pointer;" class="existing-group dropdown-item m-0">{{group}}</p>
                 </li>
             </ul>
         </div>
-        <div v-if="allow_edit" class="d-flex flex-column justify-content-center">
+        <div v-if="allow_edit && !on_adding" class="d-flex flex-column justify-content-center">
             <button @click="toggle_new_group(true)" type="button" class="btn btn-sm btn-secondary">+</button>
         </div>
     </div>
