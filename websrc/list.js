@@ -61,7 +61,7 @@ export default {
         },
     },
     template: `
-<div id="confirm-container" class="d-none position-absolute d-flex flex-column justify-content-center"
+<div id="confirm-container" class="d-none position-fixed d-flex flex-column justify-content-center"
      style="background-color: #101010bb; z-index: 1000; top: 0px; left: 0px; height: 100vh; width: 100vw;">
      <div class="d-inline-block m-auto bg-body-secondary rounded pt-2 pb-2 p-4"
           style="width: fit-content; height: fit-content;">
@@ -72,7 +72,7 @@ export default {
          </span>
      </div>
 </div>
-<div v-if="has_data" class="m-0 p-0 border-0" style="height: 100%; width: 100%; overflow-y: hidden !important">
+<div v-if="has_data" class="m-0 p-0 border-0 d-flex flex-column h-100 w-100" style="overflow-y: hidden !important">
 <div class="position-absolute z-1 ps-1 pe-1">
     <span>Group:</span>
     <div v-bind:class="current_group.trim() === '' ? '' : 'ms-2'"  class="btn-group btn-group-sm border-0 border rounded-2">
@@ -96,7 +96,7 @@ export default {
         </ul>
     </div>
 </div>
-<div class="container-fluid" style="height: 100%; margin-top: 1em; padding-bottom: 5em; overflow-x: hidden !important">
+<div class="container-fluid flex-grow-1" style="margin-top: 1em; overflow-x: hidden !important">
     <div v-for="(_, row) in Number((keywords.length/per_row) >> 0) + 1"
          class="row d-flex flex gx-5 mt-3">
         <div v-for="(_, col) in per_row" :class="['col-' + ((12/per_row)>>0)]"

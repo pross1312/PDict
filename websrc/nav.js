@@ -1,7 +1,7 @@
 export default {
     inject: ["change_content"],
     template: `
-<nav class="navbar navbar-expand p-0 bg-secondary bg-gradient" style="height: fit-content">
+<nav class="navbar navbar-expand p-0 bg-secondary bg-gradient flex-grow-0">
     <a href="/" tabindex="-1" class="bg-success fw-bolder px-3 navbar-brand">PDict</a>
     <ul class="navbar-nav">
         <li class="navbar-item">

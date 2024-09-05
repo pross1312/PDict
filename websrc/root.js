@@ -46,7 +46,11 @@ export default {
         navbar, home, list, learn
     },
     template: `
-<navbar/>
-<component :is="current_content"></component>
+<div class="h-100 w-100 d-flex flex-column">
+    <navbar/>
+    <div class="flex-grow-1 h-100 overflow-y-auto pb-2">
+        <component :is="current_content"></component>
+    </div>
+</div>
 `
 }
