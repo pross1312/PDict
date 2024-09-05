@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
     "slices"
     "math/rand"
     "runtime"
@@ -30,6 +31,7 @@ const (
 )
 
 var (
+	Data_mutex sync.Mutex
     SERVER_DATA_FILE_PATH = ".dictionary_data"
 	USED_WORDS_FILE_PATH = SERVER_DATA_FILE_PATH + ".used"
     Dict = make(Dictionary)
@@ -214,6 +216,8 @@ func remove_entry(word string) {
 
 func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
     wt.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
+	Data_mutex.Lock()
+	defer Data_mutex.Unlock()
     switch req.Method {
     case "GET":
 		log(INFO, "Client request for '%s' with query: %s",  req.URL.EscapedPath(), req.URL.Query())
@@ -234,6 +238,7 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
                     unused_words = append(unused_words, keyword)
                 }
             }
+			log(INFO, "%d words left to learn", len(unused_words));
             fmt.Fprintf(wt, log_format(INFO, "Change group to %s", group))
         } else if (req.URL.Path == "/list-group") {
             // TODO: check for data race
@@ -267,6 +272,9 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             wt.WriteHeader(http.StatusInternalServerError)
 			wt.Write([]byte(log_format(ERROR, "Can't read body, %s", err.Error())))
         } else {
+			if _, ok := Dict[entry.Keyword]; !ok { // not exist yet
+				unused_words = append(unused_words, entry.Keyword)
+			}
             var prev_groups = Dict[entry.Keyword].Group
             Dict[entry.Keyword] = entry;
             for _, old_group := range prev_groups { // remove group that this word is not in anymore
@@ -288,9 +296,7 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
                     Group[group] = append(Group[group], entry.Keyword)
                 }
             }
-            used_words = append(used_words, entry.Keyword)
-            log(INFO, "Update %s",  prettyPrint(entry))
-            fmt.Fprintf(wt, log_format(INFO, "Successfully update %s", entry.Keyword))
+            log(INFO, "Updated %s",  prettyPrint(entry))
             save_dict();
         }
     case "DELETE":
