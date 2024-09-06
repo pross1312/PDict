@@ -21,6 +21,12 @@ type Entry struct {
     Usage []string
     Group []string
 }
+
+type Filter struct {
+	Include []string
+	Exclude []string
+}
+
 type Dictionary = map[string]Entry
 type MyServer struct {}
 
@@ -47,7 +53,10 @@ var (
     }
     used_words []string = make([]string, 0, INIT_ARRAY_BUFFER)
     unused_words []string = make([]string, 0, INIT_ARRAY_BUFFER)
-	current_learn_group = ""
+	current_learn_filter = Filter{
+		Include: make([]string, 0, INIT_ARRAY_BUFFER),
+		Exclude: make([]string, 0, INIT_ARRAY_BUFFER),
+	}
 )
 
 func prettyPrint(i interface{}) string {
@@ -99,16 +108,33 @@ func process_query(wt http.ResponseWriter, req *http.Request) {
     }
 }
 
+func list_words_filtered(filter Filter, list *[]string) {
+	for _, entry := range Dict {
+		included_pass := !slices.ContainsFunc(filter.Include, func(group string) bool {
+			return !slices.Contains(entry.Group, group)
+		})
+		excluded_pass := !slices.ContainsFunc(entry.Group, func(group string) bool {
+			return slices.Contains(filter.Exclude, group)
+		})
+		if included_pass && excluded_pass {
+			*list = append(*list, entry.Keyword)
+		}
+	}
+}
+
 func process_list(wt http.ResponseWriter, req *http.Request) {
+	query := req.URL.Query()
+
     var list []string
-    group := req.URL.Query().Get("group")
-    if req.URL.Query().Has("group") && group != "" {
-        list = make([]string, 0, len(Group[group]))
-        for _, group := range Group[group] { list = append(list, group) }
-    } else {
-        list = make([]string, 0, len(Dict))
-        for keyword, _ := range Dict { list = append(list, keyword) }
-    }
+	if query.Has("filter") {
+		list = make([]string, 0, INIT_ARRAY_BUFFER)
+		var filter Filter
+		json.Unmarshal([]byte(query.Get("filter")), &filter)
+		list_words_filtered(filter, &list)
+	} else {
+		list = make([]string, 0, len(Dict))
+		for keyword, _ := range Dict { list = append(list, keyword) }
+	}
     json_data, err := json.Marshal(list)
     if Check_err(err, false, "Can't parse json for `list` request") {
         wt.WriteHeader(http.StatusInternalServerError)
@@ -147,22 +173,8 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
             fmt.Fprint(wt, "No words to learn")
             return
         }
-		if current_learn_group != "" {
-			new_len := len(used_words)
-			var i int
-			for i = len(used_words)-1; i >= 0; i-- {
-				if slices.Contains(Dict[used_words[i]].Group, current_learn_group) {
-					new_len -= 1
-					used_words[i] = used_words[new_len]
-				}
-			}
-			used_words = used_words[:new_len]
-			unused_words = Group[current_learn_group]
-		} else {
-			temp := unused_words
-			unused_words = used_words
-			used_words = temp
-		}
+		list_words_filtered(current_learn_filter, &unused_words)
+		used_words = used_words[:0]
         log(INFO, "Switch used and unused")
         log(INFO, "%d words left to learn.", len(unused_words))
     }
@@ -229,17 +241,18 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             process_list(wt, req)
         } else if (req.URL.Path == "/nextword") {
             process_nextword(wt, req)
-        } else if (req.URL.Path == "/change-learn-group") {
-            group := req.URL.Query().Get("group")
-			current_learn_group = group
+        } else if (req.URL.Path == "/change-learn-filter") {
+			json.Unmarshal([]byte(req.URL.Query().Get("filter")), &current_learn_filter)
 			unused_words = unused_words[:0]
-            for keyword, entry := range(Dict) {
-                if !slices.Contains(used_words, keyword) && (group == "" || slices.Contains(entry.Group, group)) {
-                    unused_words = append(unused_words, keyword)
-                }
-            }
+			list_words_filtered(current_learn_filter, &unused_words)
+			for _, used_word := range(used_words) {
+				if idx := slices.Index(unused_words, used_word); idx != -1 {
+					unused_words[idx] = unused_words[len(unused_words)-1]
+					unused_words = unused_words[:len(unused_words)-1]
+				}
+			}
 			log(INFO, "%d words left to learn", len(unused_words));
-            fmt.Fprintf(wt, log_format(INFO, "Change group to %s", group))
+            fmt.Fprintf(wt, log_format(INFO, "Change filter to %s", current_learn_filter))
         } else if (req.URL.Path == "/list-group") {
             // TODO: check for data race
             groups := make([]string, 0, len(Group))
