@@ -54,7 +54,7 @@ export default {
             fetch(`http://${window.location.host}/change-learn-filter?filter=${params}`).then(async result => {
                 console.log(await result.text());
                 await this.next_word();
-                show_success_msg("Successfully applied filter")
+                this.show_success_msg("Successfully applied filter")
             }).catch(err => {
                 this.show_error_msg(err);
             });
