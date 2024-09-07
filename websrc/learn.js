@@ -85,8 +85,8 @@ export default {
         }
     },
     template: `
-<div @mousedown.left="mouse_down_left($event)" class="w-100 h-100">
-<div class="d-flex h-100 w-100">
+<div class="w-100 h-100">
+<div @mousedown.left="mouse_down_left($event)" class="d-flex h-100 w-100">
 <group_filter :show="is_filtering" @filter-changed="on_filter_change"/>
 <div class="flex-grow-1 d-flex justify-content-start w-100" style="height: fit-content">
     <button class="position-absolute z-1 rounded-0 flex-grow-0 btn btn-sm m-0"

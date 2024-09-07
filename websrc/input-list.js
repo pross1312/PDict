@@ -7,7 +7,7 @@ export default {
             this.items[index] = node.value.trim();
         },
         start_edit_item(node) {
-            if (allow_edit) {
+            if (this.allow_edit) {
                 node.classList.remove("btn");
                 node.classList.add("form-control");
             }
