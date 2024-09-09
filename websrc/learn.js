@@ -26,14 +26,14 @@ export default {
         entry, group_filter
     },
     mounted() {
-        window.onkeydown = async (e) => {
-            if (e.key === " ") {
+        window.addEventListener("keydown", async (e) => {
+            if (e.srcElement.tagName !== "INPUT" && e.key === ' ') {
                 if (this.show_answer) await this.next_word();
                 this.show_answer = !this.show_answer;
                 e.stopPropagation();
-                return true;
+                return false;
             }
-        };
+        });
         const param_filters = {
             Include: [],
             Exclude: [],
@@ -64,7 +64,7 @@ export default {
                 if (this.show_answer) await this.next_word();
                 this.show_answer = !this.show_answer;
                 e.stopPropagation();
-                return true;
+                return false;
             }
         },
         async next_word() {
