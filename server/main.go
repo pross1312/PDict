@@ -108,15 +108,19 @@ func process_query(wt http.ResponseWriter, req *http.Request) {
     }
 }
 
+func is_fit_filter(entry Entry, filter Filter) bool {
+	included_pass := !slices.ContainsFunc(filter.Include, func(group string) bool {
+		return !slices.Contains(entry.Group, group)
+	})
+	excluded_pass := !slices.ContainsFunc(entry.Group, func(group string) bool {
+		return slices.Contains(filter.Exclude, group)
+	})
+	return included_pass && excluded_pass;
+}
+
 func list_words_filtered(filter Filter, list *[]string) {
 	for _, entry := range Dict {
-		included_pass := !slices.ContainsFunc(filter.Include, func(group string) bool {
-			return !slices.Contains(entry.Group, group)
-		})
-		excluded_pass := !slices.ContainsFunc(entry.Group, func(group string) bool {
-			return slices.Contains(filter.Exclude, group)
-		})
-		if included_pass && excluded_pass {
+		if is_fit_filter(entry, filter) {
 			*list = append(*list, entry.Keyword)
 		}
 	}
@@ -285,9 +289,6 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
             wt.WriteHeader(http.StatusInternalServerError)
 			wt.Write([]byte(log_format(ERROR, "Can't read body, %s", err.Error())))
         } else {
-			if _, ok := Dict[entry.Keyword]; !ok { // not exist yet
-				unused_words = append(unused_words, entry.Keyword)
-			}
             var prev_groups = Dict[entry.Keyword].Group
             Dict[entry.Keyword] = entry;
             for _, old_group := range prev_groups { // remove group that this word is not in anymore
@@ -309,6 +310,11 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
                     Group[group] = append(Group[group], entry.Keyword)
                 }
             }
+			if entry, ok := Dict[entry.Keyword]; !ok { // not exist yet
+				if is_fit_filter(entry, current_learn_filter) {
+					unused_words = append(unused_words, entry.Keyword)
+				}
+			}
             log(INFO, "Updated %s",  prettyPrint(entry))
             save_dict();
         }

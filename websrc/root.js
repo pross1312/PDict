@@ -20,14 +20,14 @@ export default {
         };
     },
     mounted() {
-        window.addEventListener('keydown', (e) => {
-            if (e.srcElement.tagName !== "INPUT") {
-                if (e.key === '1') this.change_content('home');
-                else if (e.key === '2') this.change_content('list');
-                else if (e.key === '3') this.change_content('learn');
-                return false;
-            }
-        });
+        // window.addEventListener('keydown', (e) => {
+        //     if (e.srcElement.tagName !== "INPUT") {
+        //         if (e.key === '1') this.change_content('home');
+        //         else if (e.key === '2') this.change_content('list');
+        //         else if (e.key === '3') this.change_content('learn');
+        //         return false;
+        //     }
+        // });
     },
     provide() {
         this.change_content = (content) => {

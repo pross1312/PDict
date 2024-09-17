@@ -46,6 +46,7 @@ export default {
     },
     methods: {
         on_filter_change(filters) {
+            this.show_answer = false;
             const param_filters = {
                 Include: Object.entries(filters).filter(([_name, mode]) => mode === '+').map(([name, _mode]) => name),
                 Exclude: Object.entries(filters).filter(([_name, mode]) => mode === '-').map(([name, _mode]) => name),
