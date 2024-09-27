@@ -290,15 +290,13 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
 			wt.Write([]byte(log_format(ERROR, "Can't read body, %s", err.Error())))
         } else {
             var prev_groups = Dict[entry.Keyword].Group
-            Dict[entry.Keyword] = entry;
             for _, old_group := range prev_groups { // remove group that this word is not in anymore
 				if !slices.Contains(entry.Group, old_group) {
 					if idx := slices.Index(Group[old_group], entry.Keyword); idx != -1 {
+						Group[old_group][idx] = Group[old_group][len(Group[old_group])-1]
+						Group[old_group] = Group[old_group][:len(Group[old_group])-1]
 						if len(Group[old_group]) == 0 {
 							delete(Group, old_group)
-						} else {
-							Group[old_group][idx] = Group[old_group][len(Group[old_group])-1]
-							Group[old_group] = Group[old_group][:len(Group[old_group])-1]
 						}
 					} else {
 						panic("Entry must be in previous groups right??");
@@ -310,11 +308,12 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
                     Group[group] = append(Group[group], entry.Keyword)
                 }
             }
-			if entry, ok := Dict[entry.Keyword]; !ok { // not exist yet
-				if is_fit_filter(entry, current_learn_filter) {
-					unused_words = append(unused_words, entry.Keyword)
-				}
-			}
+			// if entry, ok := Dict[entry.Keyword]; !ok { // not exist yet
+			// 	if is_fit_filter(entry, current_learn_filter) {
+			// 		unused_words = append(unused_words, entry.Keyword)
+			// 	}
+			// }
+			Dict[entry.Keyword] = entry;
             log(INFO, "Updated %s",  prettyPrint(entry))
             save_dict();
         }
