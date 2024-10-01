@@ -201,6 +201,7 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
 			unused_words = unused_words[:len(unused_words)-1]
 			used_words = append(used_words, key)
 			save_used_words()
+			log(INFO, "Sent entry `%s`", entry.Keyword)
         }
     } else {
         log(ERROR, "Can't find",  key, len(unused_words), len(Dict))

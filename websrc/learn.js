@@ -27,7 +27,7 @@ export default {
     },
     mounted() {
         window.addEventListener("keydown", async (e) => {
-            if (e.srcElement.tagName !== "INPUT" && e.key === ' ') {
+            if (e.srcElement.tagName !== "INPUT" && e.key === ' ' && !e.repeat) {
                 if (this.show_answer) await this.next_word();
                 this.show_answer = !this.show_answer;
                 e.stopPropagation();
