@@ -413,7 +413,7 @@ func main() {
 	log(INFO, "Number of unused words: %d", len(unused_words))
 	log(INFO, "Number of Used words: %d", len(used_words))
     start_default_browser()
-    log(INFO, "Server start on %s",  SERVER_ADDR)
+	log(INFO, "Server start on http://%s",  SERVER_ADDR)
     http.ListenAndServe(SERVER_ADDR, MyServer{})
 }
 

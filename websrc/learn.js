@@ -5,6 +5,7 @@ export default {
     inject: ["set_key", "change_content", "show_error_msg", "show_success_msg"],
     setup() {
         let all_groups = ref([]);
+        let waiting_next_word = false;
         let fetch_groups = () => {
             fetch(`http://${window.location.host}/list-group`).then(async result => {
                 if (result.headers.get("Content-Type").match("application/json") != null) {
@@ -13,7 +14,7 @@ export default {
             }).catch(err => alert(err));
         };
         fetch_groups();
-        return {all_groups, fetch_groups, is_filtering: ref(false)};
+        return {all_groups, fetch_groups, is_filtering: ref(false), waiting_next_word};
     },
     data() {
         return {
@@ -28,8 +29,13 @@ export default {
     mounted() {
         window.addEventListener("keydown", async (e) => {
             if (e.srcElement.tagName !== "INPUT" && e.key === ' ' && !e.repeat) {
-                if (this.show_answer) await this.next_word();
-                this.show_answer = !this.show_answer;
+                if (this.show_answer) {
+                    if (await this.next_word()) {
+                        this.show_answer = !this.show_answer;
+                    }
+                } else {
+                    this.show_answer = !this.show_answer;
+                }
                 e.stopPropagation();
                 return false;
             }
@@ -62,13 +68,20 @@ export default {
         },
         async mouse_down_left(e) {
             if (e.currentTarget === e.srcElement && e.button == 0) {
-                if (this.show_answer) await this.next_word();
-                this.show_answer = !this.show_answer;
+                if (this.show_answer) {
+                    if (await this.next_word()) {
+                        this.show_answer = !this.show_answer;
+                    }
+                } else {
+                    this.show_answer = !this.show_answer;
+                }
                 e.stopPropagation();
                 return false;
             }
         },
         async next_word() {
+            if (this.waiting_next_word) return false;
+            this.waiting_next_word = true;
             const server_nextword_addr   = `http://${window.location.host}/nextword`;
             await fetch(server_nextword_addr).then(async result => {
                 if (result.headers.get("Content-Type").includes("application/json")) {
@@ -83,6 +96,8 @@ export default {
             }).catch(err => {
                 this.show_error_msg(err);
             });
+            this.waiting_next_word = false;
+            return true;
         }
     },
     template: `
