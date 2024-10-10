@@ -90,7 +90,7 @@ export default {
                     this.entry = data;
                     this.keyword = data.Keyword;
                 } else {
-                    this.keyword = "No word to learn";
+                    this.show_error_msg("No word to learn, please change filter or add new words");
                     this.entry = null;
                 }
             }).catch(err => {

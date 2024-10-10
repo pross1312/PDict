@@ -1,9 +1,10 @@
 package main
 
 import (
+	"time"
+	"sort"
 	"sync"
     "slices"
-    "math/rand"
     "runtime"
     "strings"
     "path/filepath"
@@ -20,6 +21,7 @@ type Entry struct {
     Definition []string
     Usage []string
     Group []string
+	LastLearned int64
 }
 
 type Filter struct {
@@ -71,7 +73,7 @@ func dump_request(req *http.Request) {
 
 func process_suggest(wt http.ResponseWriter, req *http.Request) {
     key := req.URL.Query().Get("key")
-    log(INFO, "Client request for suggestion of `%s`",  key)
+    // log(INFO, "Client request for suggestion of `%s`",  key)
     result := make([]string, 0, INIT_ARRAY_BUFFER)
     for word, _ := range Dict {
         if strings.Contains(word, key) {
@@ -91,7 +93,7 @@ func process_suggest(wt http.ResponseWriter, req *http.Request) {
 
 func process_query(wt http.ResponseWriter, req *http.Request) {
     key := req.URL.Query().Get("key")
-    log(INFO, "Client request for key = `%s`",  key)
+    // log(INFO, "Client request for key = `%s`",  key)
     if entry, found := Dict[key]; found {
         json_data, err := json.Marshal(entry)
         if Check_err(err, false, "Can't parse json for `query` request") {
@@ -101,6 +103,11 @@ func process_query(wt http.ResponseWriter, req *http.Request) {
             wt.Header().Set("Content-Type", "application/json")
             wt.WriteHeader(http.StatusOK)
             wt.Write(json_data)
+
+			// update last learned (read)
+			entry.LastLearned = time.Now().Unix()
+			Dict[key] = entry
+			save_dict();
         }
     } else {
         wt.WriteHeader(http.StatusNotFound)
@@ -124,6 +131,11 @@ func list_words_filtered(filter Filter, list *[]string) {
 			*list = append(*list, entry.Keyword)
 		}
 	}
+	// NOTE: sort so that recently used words position at start
+	// 	     because pop out from the back is much easier and it does not change order of list
+	sort.Slice(*list, func(i, j int) bool {
+		return Dict[(*list)[i]].LastLearned > Dict[(*list)[j]].LastLearned
+	})
 }
 
 func process_list(wt http.ResponseWriter, req *http.Request) {
@@ -178,11 +190,21 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
             return
         }
 		list_words_filtered(current_learn_filter, &unused_words)
-		used_words = used_words[:0]
+		for i := len(used_words)-1; i >= 0; i-- {
+			if is_fit_filter(Dict[used_words[i]], current_learn_filter) {
+				used_words[i] = used_words[len(used_words)-1]
+				used_words = used_words[:len(used_words)-1]
+			}
+		}
         log(INFO, "Switch used and unused")
         log(INFO, "%d words left to learn.", len(unused_words))
     }
-    index := rand.Intn(len(unused_words))
+	if len(unused_words) == 0 {
+		wt.WriteHeader(http.StatusOK)
+		fmt.Fprint(wt, "No words to learn")
+		return
+	}
+    index := len(unused_words)-1
     key := unused_words[index]
     if entry, found := Dict[key]; found {
         json_data, err := json.Marshal(entry)
@@ -201,7 +223,14 @@ func process_nextword(wt http.ResponseWriter, req *http.Request) {
 			unused_words = unused_words[:len(unused_words)-1]
 			used_words = append(used_words, key)
 			save_used_words()
-			log(INFO, "Sent entry `%s`", entry.Keyword)
+
+			// update last check out this key
+			last_used := entry.LastLearned
+			entry.LastLearned = time.Now().Unix()
+			Dict[key] = entry
+			save_dict()
+
+			log(INFO, "Sent entry `%s`, last used: `%s`", entry.Keyword, time.Unix(last_used, 0))
         }
     } else {
         log(ERROR, "Can't find",  key, len(unused_words), len(Dict))
@@ -309,11 +338,8 @@ func (sv MyServer) ServeHTTP(wt http.ResponseWriter, req *http.Request) {
                     Group[group] = append(Group[group], entry.Keyword)
                 }
             }
-			// if entry, ok := Dict[entry.Keyword]; !ok { // not exist yet
-			// 	if is_fit_filter(entry, current_learn_filter) {
-			// 		unused_words = append(unused_words, entry.Keyword)
-			// 	}
-			// }
+
+			entry.LastLearned = time.Now().Unix()
 			Dict[entry.Keyword] = entry;
             log(INFO, "Updated %s",  prettyPrint(entry))
             save_dict();
