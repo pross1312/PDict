@@ -35,13 +35,13 @@ type MyServer struct {}
 const (
     INIT_ARRAY_BUFFER = 8
     SERVER_ADDR = "0.0.0.0:9999"
-    WEB_ROOT = "../websrc"
 )
 
 var (
 	Data_mutex sync.Mutex
-    SERVER_DATA_FILE_PATH = ".dictionary_data"
-	USED_WORDS_FILE_PATH = SERVER_DATA_FILE_PATH + ".used"
+	WEB_ROOT string
+    SERVER_DATA_FILE_PATH string
+	USED_WORDS_FILE_PATH string
     Dict = make(Dictionary)
     Group = map[string][]string{
         "Verb": []string{},
@@ -255,8 +255,6 @@ func remove_entry(word string) {
 	} else if idx := slices.Index(used_words, word); idx != -1 {
 		used_words[idx] = used_words[len(used_words)-1]
 		used_words = used_words[:len(used_words)-1]
-	} else {
-		panic("Should never happen");
 	}
 }
 
@@ -429,10 +427,21 @@ func start_default_browser() {
 
 func main() {
     log(INFO, "Root on %s",  WEB_ROOT)
+	exec_path, err := os.Executable()
+	if err != nil {
+		log(ERROR, "Could not determine executable path, error: %s", err)
+		os.Exit(1)
+	}
+
+	exec_dir := filepath.Dir(exec_path)
     if (len(os.Args) == 2) {
         SERVER_DATA_FILE_PATH = os.Args[1];
-		USED_WORDS_FILE_PATH = SERVER_DATA_FILE_PATH + ".used"
-    }
+    } else {
+        SERVER_DATA_FILE_PATH = exec_dir + "/.dictionary_data" ;
+	}
+	WEB_ROOT = exec_dir + "/../websrc"
+	USED_WORDS_FILE_PATH = SERVER_DATA_FILE_PATH + ".used"
+
     log(INFO, "Dictionary file `%s`",  SERVER_DATA_FILE_PATH)
 	load_dict()
 	log(INFO, "Number of entries: %d", len(Dict))
