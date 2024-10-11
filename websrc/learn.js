@@ -26,20 +26,11 @@ export default {
     components: {
         entry, group_filter
     },
+    unmounted() {
+        window.removeEventListener("keydown", this.handle_window_keydown); // remove this to not f*** adding it twice next time
+    },
     mounted() {
-        window.addEventListener("keydown", async (e) => {
-            if (e.srcElement.tagName !== "INPUT" && e.key === ' ' && !e.repeat) {
-                if (this.show_answer) {
-                    if (await this.next_word()) {
-                        this.show_answer = !this.show_answer;
-                    }
-                } else {
-                    this.show_answer = !this.show_answer;
-                }
-                e.stopPropagation();
-                return false;
-            }
-        });
+        window.addEventListener("keydown", this.handle_window_keydown);
         const param_filters = {
             Include: [],
             Exclude: [],
@@ -51,6 +42,19 @@ export default {
         });
     },
     methods: {
+        async handle_window_keydown(e) {
+            if (e.srcElement.tagName !== "INPUT" && e.key === ' ' && !e.repeat) {
+                if (this.show_answer) {
+                    if (await this.next_word()) {
+                        this.show_answer = false;
+                    }
+                } else {
+                    this.show_answer = true;
+                }
+                e.stopPropagation();
+                return false;
+            }
+        },
         on_filter_change(filters) {
             this.show_answer = false;
             const param_filters = {
@@ -70,10 +74,10 @@ export default {
             if (e.currentTarget === e.srcElement && e.button == 0) {
                 if (this.show_answer) {
                     if (await this.next_word()) {
-                        this.show_answer = !this.show_answer;
+                        this.show_answer = false;
                     }
                 } else {
-                    this.show_answer = !this.show_answer;
+                    this.show_answer = true;
                 }
                 e.stopPropagation();
                 return false;
@@ -81,6 +85,7 @@ export default {
         },
         async next_word() {
             if (this.waiting_next_word) return false;
+            console.log("Next word");
             this.waiting_next_word = true;
             const server_nextword_addr   = `http://${window.location.host}/nextword`;
             await fetch(server_nextword_addr).then(async result => {
