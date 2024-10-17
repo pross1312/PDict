@@ -38,7 +38,6 @@ export default {
         }
         return {
             show_success_msg: (msg) => {
-                console.log(msg);
                 Toastify({
                     text: msg,
                     duration: 500,

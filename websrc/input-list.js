@@ -13,7 +13,6 @@ export default {
             }
         },
         remove_item(item, event) {
-            event.currentTarget.parentNode.remove();
             let index = this.items.indexOf(item);
             if (index != -1) this.items.splice(index, 1);
             else alert(`Can't remove ${item} in ${this.label}`);
